@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9B109A042D95F4EE009027E9 /* BigMetric Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9B109AB02D95FC5A009027E9 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B109AAF2D95FC5A009027E9 /* Orb */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,9 +40,162 @@
 		9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BigMetric Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9B109AAC2D95FB4E009027E9 /* Exceptions for "BigMetric" folder in "BigMetric" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"App/BigMetricApp - Watch.swift",
+				Assets.xcassets,
+				Classes/AltitudeManager.swift,
+				Classes/GeoCodeHelper.swift,
+				Classes/UnifiedWorkoutManager.swift,
+				Classes/WeatherKitManager.swift,
+				Data/CityCoords.swift,
+				Data/MetaData.swift,
+				Enums/Cardinal.swift,
+				Enums/CustomError.swift,
+				Enums/GPSAccuracyColor.swift,
+				Enums/Haptics.swift,
+				Enums/PrecipChanceColor.swift,
+				Enums/temperatureColor.swift,
+				Enums/TimeUnit.swift,
+				Enums/WeatherConditions.swift,
+				Enums/WorkoutState.swift,
+				Enums/WorkoutType.swift,
+				Extensions/AsyncHealthKitExtensions.swift,
+				Extensions/CLLocation.swift,
+				Extensions/CLLocationWatch.swift,
+				"Extensions/Color+Ext.swift",
+				Extensions/colorHeartBeat.swift,
+				Extensions/Date.swift,
+				Extensions/displayWorkout.swift,
+				Extensions/DistanceTrackerExtensions.swift,
+				Extensions/ForecastInfo.swift,
+				Extensions/gpEssentials.swift,
+				Extensions/heartIcon.swift,
+				Extensions/HKExtensions.swift,
+				Extensions/HKWorkoutExtensions.swift,
+				Extensions/stepCounterExt.swift,
+				Extensions/viewExt.swift,
+				Extensions/WorkoutManagerExt.swift,
+				Extensions/WriteGPSData.swift,
+				Helpers/Atomic.swift,
+				Helpers/GetLocation.swift,
+				Info.plist,
+				InfoiOS.plist,
+				Orb,
+				"Preview Content/Preview Assets.xcassets",
+				Structs/ActivityTypeSetup.swift,
+				Structs/AlertView.swift,
+				Structs/AltitudeLineChartView.swift,
+				Structs/AppConstants.swift,
+				Structs/locationProgressView.swift,
+				Utilities/AlertItem.swift,
+				Views/activityRings.swift,
+				Views/AltitudePointChart.swift,
+				Views/AltitudeView.swift,
+				Views/ButtonView.swift,
+				Views/CompassView.swift,
+				Views/debugScreen.swift,
+				Views/endWorkout.swift,
+				Views/GPSIconView.swift,
+				Views/howFarGPS.swift,
+				Views/insideButtonTxtView.swift,
+				Views/largeTime.swift,
+				Views/rootContentView.swift,
+				Views/showAllWeather.swift,
+				Views/showHeartBeat.swift,
+				Views/ShowTimeOrSpeed.swift,
+				Views/ShowWeather.swift,
+				Views/smallDistanceView.swift,
+				Views/Stupid.swift,
+				Views/summary.swift,
+				Views/SummaryMetricView.swift,
+				Views/SwiftUIView.swift,
+				Views/WeatherStatsView.swift,
+			);
+			target = 9B1099F52D95F4ED009027E9 /* BigMetric */;
+		};
+		9B109AAD2D95FB4E009027E9 /* Exceptions for "BigMetric" folder in "BigMetric Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"App/BigMetricApp - Watch.swift",
+				Assets.xcassets,
+				Classes/AltitudeManager.swift,
+				Classes/GeoCodeHelper.swift,
+				Classes/UnifiedWorkoutManager.swift,
+				Classes/WeatherKitManager.swift,
+				Data/CityCoords.swift,
+				Data/MetaData.swift,
+				Enums/Cardinal.swift,
+				Enums/CustomError.swift,
+				Enums/GPSAccuracyColor.swift,
+				Enums/Haptics.swift,
+				Enums/PrecipChanceColor.swift,
+				Enums/temperatureColor.swift,
+				Enums/TimeUnit.swift,
+				Enums/WeatherConditions.swift,
+				Enums/WorkoutState.swift,
+				Enums/WorkoutType.swift,
+				Extensions/AsyncHealthKitExtensions.swift,
+				Extensions/CLLocation.swift,
+				Extensions/CLLocationWatch.swift,
+				"Extensions/Color+Ext.swift",
+				Extensions/colorHeartBeat.swift,
+				Extensions/Date.swift,
+				Extensions/displayWorkout.swift,
+				Extensions/DistanceTrackerExtensions.swift,
+				Extensions/ForecastInfo.swift,
+				Extensions/gpEssentials.swift,
+				Extensions/heartIcon.swift,
+				Extensions/HKExtensions.swift,
+				Extensions/HKWorkoutExtensions.swift,
+				Extensions/stepCounterExt.swift,
+				Extensions/viewExt.swift,
+				Extensions/WorkoutManagerExt.swift,
+				Extensions/WriteGPSData.swift,
+				Helpers/Atomic.swift,
+				Helpers/GetLocation.swift,
+				Structs/ActivityTypeSetup.swift,
+				Structs/AlertView.swift,
+				Structs/AltitudeLineChartView.swift,
+				Structs/AppConstants.swift,
+				Structs/locationProgressView.swift,
+				Utilities/AlertItem.swift,
+				Views/activityRings.swift,
+				Views/AltitudePointChart.swift,
+				Views/AltitudeView.swift,
+				Views/ButtonView.swift,
+				Views/CompassView.swift,
+				Views/debugScreen.swift,
+				Views/endWorkout.swift,
+				Views/GPSIconView.swift,
+				Views/howFarGPS.swift,
+				Views/insideButtonTxtView.swift,
+				Views/largeTime.swift,
+				Views/rootContentView.swift,
+				Views/showAllWeather.swift,
+				Views/showHeartBeat.swift,
+				Views/ShowTimeOrSpeed.swift,
+				Views/ShowWeather.swift,
+				Views/smallDistanceView.swift,
+				Views/Stupid.swift,
+				Views/summary.swift,
+				Views/SummaryMetricView.swift,
+				Views/SwiftUIView.swift,
+				Views/WeatherStatsView.swift,
+			);
+			target = 9B109A022D95F4EE009027E9 /* BigMetric Watch App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9B1099F82D95F4ED009027E9 /* BigMetric */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9B109AAC2D95FB4E009027E9 /* Exceptions for "BigMetric" folder in "BigMetric" target */,
+				9B109AAD2D95FB4E009027E9 /* Exceptions for "BigMetric" folder in "BigMetric Watch App" target */,
+			);
 			path = BigMetric;
 			sourceTree = "<group>";
 		};
@@ -64,6 +218,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9B109AB02D95FC5A009027E9 /* Orb in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,6 +287,7 @@
 			);
 			name = "BigMetric Watch App";
 			packageProductDependencies = (
+				9B109AAF2D95FC5A009027E9 /* Orb */,
 			);
 			productName = "BigMetric Watch App";
 			productReference = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */;
@@ -164,6 +320,9 @@
 			);
 			mainGroup = 9B1099ED2D95F4ED009027E9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9B109AAE2D95FC5A009027E9 /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9B1099F72D95F4ED009027E9 /* Products */;
 			projectDirPath = "";
@@ -344,7 +503,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KP3ZH5K2SY;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BigMetric/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BigMetric;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.grantperry.BigMetric;
@@ -374,7 +534,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KP3ZH5K2SY;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BigMetric/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BigMetric;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.grantperry.BigMetric;
@@ -405,7 +566,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KP3ZH5K2SY;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BigMetric/InfoiOS.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BigMetric;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -437,7 +599,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = KP3ZH5K2SY;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BigMetric/InfoiOS.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BigMetric;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -491,6 +654,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		9B109AAE2D95FC5A009027E9 /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = BigMetric/Orb;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9B109AAF2D95FC5A009027E9 /* Orb */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Orb;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9B1099EE2D95F4ED009027E9 /* Project object */;
 }
