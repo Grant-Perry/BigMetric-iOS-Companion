@@ -117,7 +117,7 @@ class UnifiedWorkoutManager: NSObject,
 	  super.init()
 	  resetForNewWorkout()
 	  setPrecision()
-//	  LMDelegate.allowsBackgroundLocationUpdates = true
+	  //	  LMDelegate.allowsBackgroundLocationUpdates = true
 	  LMDelegate.activityType = .fitness
 
 	  setupWorkoutNotificationActions()
@@ -187,6 +187,28 @@ class UnifiedWorkoutManager: NSObject,
 
    /// Starts a new workout session.
    func startNewWorkout() {
+	  // First verify HealthKit is available
+	  guard HKHealthStore.isHealthDataAvailable() else {
+		 print("[UWM] 🚫 HealthKit is not available on this device")
+		 return
+	  }
+
+	  // Then verify authorization before proceeding
+	  let workoutStatus = healthStore.authorizationStatus(for: HKObjectType.workoutType())
+	  let routeStatus = healthStore.authorizationStatus(for: HKSeriesType.workoutRoute())
+
+	  guard workoutStatus == .sharingAuthorized else {
+		 print("[UWM] 🚫 No authorization for saving workouts")
+		 return
+	  }
+
+	  guard routeStatus == .sharingAuthorized else {
+		 print("[UWM] 🚫 No authorization for saving routes")
+		 return
+	  }
+
+	  print("[UWM] ✅ HealthKit authorization verified")
+
 	  resetForNewWorkout()
 	  LMDelegate.delegate = self
 	  clearBufferedLocations() // Explicitly clear buffered locations before initializing workout
@@ -269,48 +291,68 @@ class UnifiedWorkoutManager: NSObject,
    // FIX: Improve the finishWorkoutAndRoute method to handle errors better
    func finishWorkoutAndRoute() {
 	  guard !workoutFullySaved else {
-		 print("[UWM] Workout already saved, ignoring duplicate finishWorkoutAndRoute call")
+		 print("[UWM] ⚠️ Workout already saved, ignoring duplicate finishWorkoutAndRoute call")
 		 isSavingToHealthKit = false
 		 return
 	  }
 
 	  guard let thisBuilder = builder else {
-		 print("[UWM] No workout builder available, cannot finish workout")
+		 print("[UWM] 🚫 No workout builder available, cannot finish workout")
 		 isSavingToHealthKit = false
 		 return
 	  }
 
 	  Task {
 		 do {
+			print("[UWM] 🏃‍♂️ Starting workout save process...")
+
 			// End collection and await result using async extension
 			try await thisBuilder.endCollectionAsync(withEnd: Date())
-			print("[UWM] Collection ended successfully")
+			print("[UWM] ✅ Collection ended successfully")
 
 			// Fetch weather data
 			await fetchWeatherAndCityIfNeeded()
 			let meta = buildMetadataDictionary()
+			print("[UWM] 📍 Metadata prepared: \(meta)")
 
 			// Add metadata using async extension
 			try await thisBuilder.addMetadataAsync(meta)
-			print("[UWM] Metadata added successfully")
+			print("[UWM] ✅ Metadata added successfully")
 
 			// Finish workout using async extension
 			let workout = try await thisBuilder.finishWorkoutAsync()
-			print("[UWM] Workout finished successfully: \(workout.uuid)")
+			print("[UWM] ✅ Workout saved successfully with UUID: \(workout.uuid)")
+
+			// Verify workout exists in HealthKit
+			let predicate = HKQuery.predicateForObject(with: workout.uuid)
+			let workoutQuery = HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: 1, sortDescriptors: nil) { _, samples, error in
+			   if let error = error {
+				  print("[UWM] 🚫 Error verifying workout: \(error.localizedDescription)")
+				  return
+			   }
+
+			   if let samples = samples, !samples.isEmpty {
+				  print("[UWM] ✅ Workout verified in HealthKit database")
+			   } else {
+				  print("[UWM] ⚠️ Warning: Workout not found in HealthKit after save")
+			   }
+			}
+			healthStore.execute(workoutQuery)
 
 			// Finish route using async extension
 			if let routeBuilder = self.routeBuilder {
 			   try await routeBuilder.finishRouteAsync(with: workout, metadata: nil)
-			   print("[UWM] Route successfully added to workout: \(workout.uuid)")
+			   print("[UWM] ✅ Route successfully added to workout: \(workout.uuid)")
+			} else {
+			   print("[UWM] ⚠️ No route builder available")
 			}
 
 			// Update state
 			self.workoutFullySaved = true
 			self.isSavingToHealthKit = false
 
-			// Now instruct the UI to show summary
 			DispatchQueue.main.async {
-			   print("[UWM] Calling onEndAndShowSummary callback")
+			   print("[UWM] 🏁 Calling onEndAndShowSummary callback")
 			   self.onEndAndShowSummary?()
 			}
 
@@ -318,10 +360,12 @@ class UnifiedWorkoutManager: NSObject,
 			self.startMonitoringActivity()
 			isWalkingTriggerOn = true
 		 } catch {
-			print("[UWM] Error finishing workout: \(error.localizedDescription)")
+			print("[UWM] 🚫 Error finishing workout: \(error.localizedDescription)")
+			if let hkError = error as? HKError {
+			   print("[UWM] 🚫 HealthKit Error Code: \(hkError.code.rawValue)")
+			}
 			self.isSavingToHealthKit = false
 
-			// Even on error, we should try to show the summary with whatever data we have
 			DispatchQueue.main.async {
 			   self.workoutFullySaved = true // Mark as done even with error
 			   self.onEndAndShowSummary?()
@@ -551,11 +595,19 @@ class UnifiedWorkoutManager: NSObject,
 		 HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
 		 HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
 	  ]
+
+	  print("[UWM] 🔐 Requesting HealthKit authorization...")
 	  healthStore.requestAuthorization(toShare: toWrite, read: toRead) { success, err in
 		 if let e = err {
-			print("HealthKit auth error: \(e.localizedDescription)")
+			print("[UWM] 🚫 HealthKit auth error: \(e.localizedDescription)")
 		 } else {
-			print("HealthKit auth success: \(success)")
+			print("[UWM] ✅ HealthKit auth success: \(success)")
+
+			// Verify authorization status for each type
+			for type in toWrite {
+			   let status = self.healthStore.authorizationStatus(for: type)
+			   print("[UWM] 📝 Authorization for \(type): \(status.rawValue)")
+			}
 		 }
 	  }
    }

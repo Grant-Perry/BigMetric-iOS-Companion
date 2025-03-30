@@ -53,6 +53,9 @@
 		 <string>remote-notification</string>
 	  </array>
 
+	  <key>ITSAppUsesNonExemptEncryption</key>
+	  <string>no</string>
+
 	  <key>UILaunchStoryboardName</key>
 	  <string>LaunchScreen</string>
 
