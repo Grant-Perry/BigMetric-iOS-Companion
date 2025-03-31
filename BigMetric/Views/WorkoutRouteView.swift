@@ -198,3 +198,19 @@ struct WorkoutRouteView: View {
 	  return String(format: "%d:%02d", wholeMinutes, seconds)
    }
 }
+
+//struct WorkoutRouteView_Previews: PreviewProvider {
+//   static var previews: some View {
+//	  let dummyWorkout = HKWorkout(activityType: .running,
+//								   start: Date(),
+//								   end: Date().addingTimeInterval(3600),
+//								   duration: 3600,
+//								   totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: 500),
+//								   totalDistance: HKQuantity(unit: .mile(), doubleValue: 5),
+//								   metadata: nil)
+//
+//	  WorkoutRouteView(workout: dummyWorkout, polyViewModel: PolyViewModel())
+//		 .background(Color.black)
+//		 .previewDisplayName("Workout Route Preview")
+//   }
+//}

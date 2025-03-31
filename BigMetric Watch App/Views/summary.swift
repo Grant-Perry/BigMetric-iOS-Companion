@@ -56,12 +56,27 @@ struct summary: View {
 				  .cornerRadius(15)
 
 				  // Steps
-				  SummaryMetricView(
-					 title: "Steps",
-					 value: "\(unifiedWorkoutManager.workoutStepCount)",
-					 textSize: textSizeBig
-				  )
+				  HStack {
+					 SummaryMetricView(
+						title: "Steps",
+						value: "",
+						textSize: textSizeBig
+					 )
+					 Spacer()
+					 Text("\(unifiedWorkoutManager.workoutStepCount)")
+						.font(.system(size: 65).weight(.light))
+						.foregroundColor(.white)
+						.opacity(0.65)
+						.offset(x: -10, y: -10)
+						.padding(.trailing)
+						.frame(maxWidth: .infinity)
+						.lineLimit(1)
+						.minimumScaleFactor(0.85)
+						.scaledToFit()
+
+				  }
 				  .padding(.vertical, 8)
+				  .padding(.horizontal)
 				  .frame(maxWidth: .infinity)
 				  .background(Color.white.opacity(0.15))
 				  .cornerRadius(15)
