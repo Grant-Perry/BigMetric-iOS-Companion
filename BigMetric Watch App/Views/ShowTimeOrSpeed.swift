@@ -38,6 +38,7 @@ struct ShowTimeOrSpeed: View {
 	  VStack {
 		 if unifiedWorkoutManager.yardsOrMiles {
 			HStack {
+			   // Heading
 			   Text(displayMode == .speed ? unifiedWorkoutManager.heading : "")
 				  .font(.subheadline)
 				  .fontWeight(.bold)

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AppConstants {
    static let appName = "BigPoly"
-   static let title = "Gp. Workouts"
+   static let title = "My Workouts"
 
    static func getVersion() -> String {
 	  return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"

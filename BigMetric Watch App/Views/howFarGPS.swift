@@ -80,7 +80,8 @@ struct howFarGPS: View {
 				  isUp: self.isUp,
 				  screenBounds: self.screenBounds
 			   )
-			   .scaleEffect(1.1)
+			   .scaleEffect(1.18)
+			   
 			   .overlay(
 				  /// Double tap to start the workout HERE
 				  VStack {
