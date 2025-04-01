@@ -10,32 +10,33 @@
 import SwiftUI
 
 struct GPSIconView: View {
-	var accuracy: Int
-	var size: CGFloat
+   var accuracy: Int
+   var size: CGFloat
 
-	var body: some View {
-		VStack {
-			VStack {
-				Text("\(accuracy)")
-					.font(.system(size: 12,
-									  weight: .none))
+   var body: some View {
+	  VStack {
+		 VStack {
+			Text("\(accuracy)")
+			   .font(.system(size: 9, weight: .none))
+			   .rightJustify()
+			   .opacity(0.5)
+			   .foregroundColor(.gpWhite)
 
-					.rightJustify()
-			}
 
-			VStack {
-				Image(systemName: "antenna.radiowaves.left.and.right")
-					.resizable()
-					.aspectRatio(contentMode: .fit)
-					.frame(width: size)
-					.horizontallyCentered()
-					.foregroundColor(colorForAccuracy(accuracy))
-			}
-		}
-	}
+		 }
+		 VStack {
+			Image(systemName: "antenna.radiowaves.left.and.right")
+			   .resizable()
+			   .aspectRatio(contentMode: .fit)
+			   .frame(width: size)
+			   .horizontallyCentered()
+			   .foregroundColor(colorForAccuracy(accuracy))
+		 }
+	  }
+   }
 }
 
 #Preview {
-	GPSIconView(accuracy: 35,
-					size: 25)
+   GPSIconView(accuracy: 35,
+			   size: 25)
 }

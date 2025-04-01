@@ -14,6 +14,19 @@ struct summary: View {
 	  return "\(AppConstants.appName) - ver: \(AppConstants.getVersion())"
    }
 
+   private var averagePace: String {
+	  let timeInMinutes = unifiedWorkoutManager.elapsedTime / 60
+	  let distanceInMiles = unifiedWorkoutManager.distance
+
+	  guard distanceInMiles > 0 else { return "0:00" }
+
+	  let paceInMinutesPerMile = timeInMinutes / distanceInMiles
+	  let minutes = Int(paceInMinutesPerMile)
+	  let seconds = Int((paceInMinutesPerMile - Double(minutes)) * 60)
+
+	  return String(format: "%d:%02d", minutes, seconds)
+   }
+
    var body: some View {
 	  ZStack {
 		 LinearGradient(
@@ -55,31 +68,41 @@ struct summary: View {
 				  .background(Color.white.opacity(0.15))
 				  .cornerRadius(15)
 
+				  // Average Pace
+				  SummaryMetricView(
+					 title: "Avg Pace (min/mi)",
+					 value: averagePace,
+					 textSize: textSizeBig
+				  )
+				  .padding(.vertical, 8)
+				  .frame(maxWidth: .infinity)
+				  .background(Color.white.opacity(0.15))
+				  .cornerRadius(15)
+
 				  // Steps
-				  HStack {
-					 SummaryMetricView(
-						title: "Steps",
-						value: "",
-						textSize: textSizeBig
-					 )
+				  HStack(spacing: 0) {
+					 Text("Steps")
+						.font(.system(size: CGFloat(textSizeSmall)))
+						.foregroundColor(.white)
+						.opacity(0.7)
+						.padding(.leading)
+
 					 Spacer()
+
 					 Text("\(unifiedWorkoutManager.workoutStepCount)")
 						.font(.system(size: 65).weight(.light))
 						.foregroundColor(.white)
 						.opacity(0.65)
-						.offset(x: -10, y: -10)
-						.padding(.trailing)
-						.frame(maxWidth: .infinity)
+						.minimumScaleFactor(0.3)
 						.lineLimit(1)
-						.minimumScaleFactor(0.85)
-						.scaledToFit()
-
+						.padding(.horizontal)
 				  }
 				  .padding(.vertical, 8)
-				  .padding(.horizontal)
 				  .frame(maxWidth: .infinity)
 				  .background(Color.white.opacity(0.15))
 				  .cornerRadius(15)
+
+				  // Weather card
 			   }
 			   .padding(.horizontal)
 
@@ -126,7 +149,9 @@ struct summary: View {
 				  }
 			   }
 			   .padding()
-			   .background(Color.white.opacity(0.15))
+			   .background(
+				  WeatherGradient(from: weatherKitManager.symbolVar).gradient
+			   )
 			   .cornerRadius(15)
 			   .padding(.horizontal)
 
@@ -188,4 +213,51 @@ struct summary: View {
    private func formatDistance(_ d: Double) -> String {
 	  String(format: "%.2f", d)
    }
+}
+
+struct WeatherGradient {
+   let gradient: Gradient
+
+   init(from symbol: String) {
+	  switch symbol {
+		 case "sun.max.fill":
+			gradient = Gradient(colors: [.yellow, .orange])
+		 case "cloud.sun.fill":
+			gradient = Gradient(colors: [.gray, .blue])
+		 case "moon.fill":
+			gradient = Gradient(colors: [.blue, .purple])
+		 default:
+			gradient = Gradient(colors: [.white, .black])
+	  }
+   }
+}
+
+#Preview {
+   let mockWorkoutManager = UnifiedWorkoutManager()
+   let mockWeatherManager = WeatherKitManager()
+
+   // Set mock data for workout manager
+   mockWorkoutManager.distance = 5.23
+   mockWorkoutManager.elapsedTime = 3600 // 1 hour
+   mockWorkoutManager.formattedTimeString = "01:00:00"
+   mockWorkoutManager.workoutStepCount = 8547
+   mockWorkoutManager.workoutState = .ended
+   mockWorkoutManager.workoutFullySaved = true
+
+   // Set mock data for weather manager
+   mockWeatherManager.tempVar = "72"
+   mockWeatherManager.highTempVar = "75"
+   mockWeatherManager.lowTempVar = "65"
+   mockWeatherManager.symbolVar = "sun.max.fill"
+   mockWeatherManager.windSpeedVar = 8.5
+   mockWeatherManager.windDirectionVar = "NE"
+   mockWeatherManager.weekForecast = [
+	  WeatherKitManager.Forecasts(symbolName: "sun.max.fill", minTemp: "65", maxTemp: "75"),
+	  WeatherKitManager.Forecasts(symbolName: "cloud.sun.fill", minTemp: "63", maxTemp: "72")
+   ]
+
+   return summary(unifiedWorkoutManager: mockWorkoutManager,
+				  weatherKitManager: mockWeatherManager,
+				  selectedTab: .constant(0))
+   .environmentObject(mockWorkoutManager)
 }

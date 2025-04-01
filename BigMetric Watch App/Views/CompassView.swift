@@ -85,6 +85,7 @@ struct CompassView: View {
 		 }
 	  }
 	  .font(.headline)
+	  .scaleEffect(0.97)
 	  // Attach a double-tap gesture to the entire compass view.
 	  // When double tapped, the mode toggles between:
 	  //   • Static background / rotating needle, and
@@ -95,4 +96,20 @@ struct CompassView: View {
 		 }
 	  }
    }
+}
+
+#Preview {
+   let mockWorkoutManager = UnifiedWorkoutManager()
+
+   // Set mock data
+   mockWorkoutManager.course = 45.0 // 45 degree heading
+   mockWorkoutManager.heading = "NE" // Northeast
+
+   return CompassView(
+	  unifiedWorkoutManager: mockWorkoutManager,
+	  heading: 45.0,
+	  routeHeading: 45.0
+   )
+   .frame(width: WKInterfaceDevice.current().screenBounds.width)
+   .background(Color.black) // Adding dark background for better visibility
 }

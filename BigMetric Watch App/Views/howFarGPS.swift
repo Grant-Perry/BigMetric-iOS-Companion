@@ -82,7 +82,7 @@ struct howFarGPS: View {
 			   )
 			   .scaleEffect(1.1)
 			   .overlay(
-				  /// Double tap area
+				  /// Double tap to start the workout HERE
 				  VStack {
 					 DoubleClickButton(action: {
 						/// Debounce logic: only allow action if enough time has passed
@@ -130,6 +130,72 @@ struct howFarGPS: View {
 			   )
 			   Spacer()
 			}
+			/// move these back inside the next VStack if you want to implement
+			/// Yards button
+			//				  HStack {
+			//					 DoubleClickButton(action: {
+			//						unifiedWorkoutManager.showStartText = true
+			//						unifiedWorkoutManager.yardsOrMiles = false
+			//					 }) {
+			//						Image(systemName: "y.circle.fill")
+			//						   .font(.footnote)
+			//						   .foregroundColor(.white)
+			//						   .cornerRadius(10)
+			//					 }
+			//					 .frame(width: width, height: height, alignment: .center)
+			//					 .background(
+			//						LinearGradient(
+			//						   gradient: Gradient(colors: [bgYardsStopTop, bgYardsStopBottom]),
+			//						   startPoint: .bottomLeading,
+			//						   endPoint: .topLeading
+			//						)
+			//					 )
+			//					 .cornerRadius(15)
+			//					 .overlay(
+			//						RoundedRectangle(cornerRadius: 15)
+			//						   .stroke(
+			//							  unifiedWorkoutManager.yardsOrMiles ? .black : .white,
+			//							  lineWidth: 3
+			//						   )
+			//					 )
+			//				  }
+			
+			/// Miles button
+			//				  HStack {
+			//					 DoubleClickButton(action: {
+			//						unifiedWorkoutManager.isSpeed = false
+			//						unifiedWorkoutManager.yardsOrMiles = true
+			//						unifiedWorkoutManager.showStartText = true
+			//					 }) {
+			//						Image(systemName: "m.circle.fill")
+			//						   .font(.footnote)
+			//						   .foregroundColor(.white)
+			//						   .cornerRadius(10)
+			//					 }
+			//					 .frame(width: width, height: height, alignment: .center)
+			//					 .background(
+			//						LinearGradient(
+			//						   gradient: Gradient(colors: [
+			//							  unifiedWorkoutManager.yardsOrMiles
+			//							  ? (!isRecording ? bgMilesStopTop : bgMilesStartTop)
+			//							  : bgMilesStopTop,
+			//							  unifiedWorkoutManager.yardsOrMiles
+			//							  ? (!isRecording ? bgMilesStopBottom : bgMilesStartBottom)
+			//							  : bgMilesStopBottom
+			//						   ]),
+			//						   startPoint: .bottomLeading,
+			//						   endPoint: .topLeading
+			//						)
+			//					 )
+			//					 .cornerRadius(15)
+			//					 .overlay(
+			//						RoundedRectangle(cornerRadius: 15)
+			//						   .stroke(
+			//							  !unifiedWorkoutManager.yardsOrMiles ? .black : .white,
+			//							  lineWidth: 3
+			//						   )
+			//					 )
+			//				  }
 			
 			/// The bottom row for ± reset and yards/miles toggles
 			VStack {
@@ -140,89 +206,30 @@ struct howFarGPS: View {
 						unifiedWorkoutManager.resetForNewWorkout()
 						unifiedWorkoutManager.forceLocationRefresh()
 					 }) {
-						Image(systemName: "arrow.clockwise.circle.fill")
-						   .font(.footnote)
-						   .fontWeight(.medium)
+						Image(systemName: "repeat.circle.fill")
+						   .resizable()
+						   .aspectRatio(contentMode: .fit)
+						   .frame(width: 20, height: 20)
 						   .foregroundColor(.white)
-						   .cornerRadius(10)
 					 }
-					 .frame(width: width + 5, height: height + 5, alignment: .center)
-					 .background(
-						LinearGradient(
-						   gradient: Gradient(colors: [.blue, gradStopColor]),
-						   startPoint: .bottomLeading,
-						   endPoint: .topLeading
-						)
-					 )
-					 .cornerRadius(15)
+					 .frame(width: 25, height: 25, alignment: .center)
+					 					 .background(
+					 						LinearGradient(
+											 gradient: Gradient(
+												colors: [.gpPink, .gpBlue]
+											 ),
+					 						   startPoint: .bottomLeading,
+					 						   endPoint: .topLeading
+					 						)
+					 					 )
+										 .clipShape(.circle)
+//					 					 .cornerRadius(5)
+					 
 				  }
-				  
-				  /// Yards button
-				  HStack {
-					 DoubleClickButton(action: {
-						unifiedWorkoutManager.showStartText = true
-						unifiedWorkoutManager.yardsOrMiles = false
-					 }) {
-						Image(systemName: "y.circle.fill")
-						   .font(.footnote)
-						   .foregroundColor(.white)
-						   .cornerRadius(10)
-					 }
-					 .frame(width: width, height: height, alignment: .center)
-					 .background(
-						LinearGradient(
-						   gradient: Gradient(colors: [bgYardsStopTop, bgYardsStopBottom]),
-						   startPoint: .bottomLeading,
-						   endPoint: .topLeading
-						)
-					 )
-					 .cornerRadius(15)
-					 .overlay(
-						RoundedRectangle(cornerRadius: 15)
-						   .stroke(
-							  unifiedWorkoutManager.yardsOrMiles ? .black : .white,
-							  lineWidth: 3
-						   )
-					 )
-				  }
-				  
-				  /// Miles button
-				  HStack {
-					 DoubleClickButton(action: {
-						unifiedWorkoutManager.isSpeed = false
-						unifiedWorkoutManager.yardsOrMiles = true
-						unifiedWorkoutManager.showStartText = true
-					 }) {
-						Image(systemName: "m.circle.fill")
-						   .font(.footnote)
-						   .foregroundColor(.white)
-						   .cornerRadius(10)
-					 }
-					 .frame(width: width, height: height, alignment: .center)
-					 .background(
-						LinearGradient(
-						   gradient: Gradient(colors: [
-							  unifiedWorkoutManager.yardsOrMiles
-							  ? (!isRecording ? bgMilesStopTop : bgMilesStartTop)
-							  : bgMilesStopTop,
-							  unifiedWorkoutManager.yardsOrMiles
-							  ? (!isRecording ? bgMilesStopBottom : bgMilesStartBottom)
-							  : bgMilesStopBottom
-						   ]),
-						   startPoint: .bottomLeading,
-						   endPoint: .topLeading
-						)
-					 )
-					 .cornerRadius(15)
-					 .overlay(
-						RoundedRectangle(cornerRadius: 15)
-						   .stroke(
-							  !unifiedWorkoutManager.yardsOrMiles ? .black : .white,
-							  lineWidth: 3
-						   )
-					 )
-				  }
-				  
+				  //				  .frame(width: .infinity)
+				  .padding(.leading)
+				  .offset(x: -100)
+
 				  /// New button for walking trigger
 				  HStack {
 					 DoubleClickButton(action: {
@@ -234,44 +241,40 @@ struct howFarGPS: View {
 						   .cornerRadius(10)
 					 }
 					 .frame(width: width + 5, height: height + 5, alignment: .center)
-//					 .background(
-//						LinearGradient(
-//						   gradient: Gradient(colors: [unifiedWorkoutManager.isWalkingTriggerOn ? .gpGreen : .gpPink, unifiedWorkoutManager.isWalkingTriggerOn ? .gpGreen.opacity(0.8) : .gpPink.opacity(0.8)]),
-//						   startPoint: .bottomLeading,
-//						   endPoint: .topLeading
-//						)
-//					 )
 					 .cornerRadius(15)
 				  }
 			   }
 			   .frame(width: (screenBounds.width / 0.5), height: 100)
 			}
+			//			.background(.white).opacity(0.1)
 			.padding(.top, -50)
+			.offset(x: 55)
 		 }
 		 
 		 ZStack {
 			HStack {
-			   HStack {
-				  Circle()
-					 .fill(
-						LinearGradient(
-						   gradient: Gradient(colors: [
-							  isUp
-							  ? isUpdatingOn
-							  : (isHealthUpdate ? isHealthUpdateOn : isUpdatingOff),
-							  isUp
-							  ? isUpdatingOnStop
-							  : isUpdatingOffStop
-						   ]),
-						   startPoint: .topLeading,
-						   endPoint: .bottomTrailing
-						)
-					 )
-					 .frame(width: 10, height: 10)
-					 .offset(x: 98, y: (-screenBounds.height / 2))
-			   }
-			   Spacer().frame(width: 15)
-			   
+			   // updating indicator
+//			   HStack {
+//				  Circle()
+//					 .fill(
+//						LinearGradient(
+//						   gradient: Gradient(colors: [
+//							  isUp
+//							  ? isUpdatingOn
+//							  : (isHealthUpdate ? isHealthUpdateOn : isUpdatingOff),
+//							  isUp
+//							  ? isUpdatingOnStop
+//							  : isUpdatingOffStop
+//						   ]),
+//						   startPoint: .topLeading,
+//						   endPoint: .bottomTrailing
+//						)
+//					 )
+//					 .frame(width: 10, height: 10)
+//					 .offset(x: 98, y: (-screenBounds.height / 2))
+//			   }
+//			   Spacer().frame(width: 15)
+			   // GPS Strength indicator 
 			   HStack {
 				  GPSIconView(
 					 accuracy: Int(unifiedWorkoutManager.GPSAccuracy),
@@ -306,5 +309,20 @@ struct howFarGPS: View {
    /// For debug usage only.
    func updateDebugStr(_ var1: Bool, _ var2: Bool) {
 	  debugStr = "YM: \(String(var1)) - isRec: \(String(var2))"
+   }
+}
+
+struct howFarGPS_Previews: PreviewProvider {
+   static var previews: some View {
+	  let dummyManager = UnifiedWorkoutManager()
+	  dummyManager.yardsOrMiles = true
+	  dummyManager.workoutState = .notStarted
+	  dummyManager.weIsRecording = false
+	  dummyManager.isWalkingTriggerOn = false
+	  dummyManager.GPSAccuracy = 5
+	  dummyManager.isBeep = false
+	  
+	  return howFarGPS(unifiedWorkoutManager: dummyManager)
+		 .previewDisplayName("Preview - howFarGPS")
    }
 }
