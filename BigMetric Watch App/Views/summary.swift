@@ -215,22 +215,6 @@ struct summary: View {
    }
 }
 
-struct WeatherGradient {
-   let gradient: Gradient
-
-   init(from symbol: String) {
-	  switch symbol {
-		 case "sun.max.fill":
-			gradient = Gradient(colors: [.yellow, .orange])
-		 case "cloud.sun.fill":
-			gradient = Gradient(colors: [.gray, .blue])
-		 case "moon.fill":
-			gradient = Gradient(colors: [.blue, .purple])
-		 default:
-			gradient = Gradient(colors: [.white, .black])
-	  }
-   }
-}
 
 #Preview {
    let mockWorkoutManager = UnifiedWorkoutManager()

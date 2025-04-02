@@ -295,6 +295,42 @@ public class WorkoutCore {
 
    public func update(from workout: HKWorkout) {
 	  self.distance = workout.totalDistance?.doubleValue(for: .mile()) ?? 0.0
+	  // Energy burned is already available directly from the workout
+	  let energyBurned = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0.0
+	  print("[WorkoutCore] Energy burned: \(energyBurned) kcal")
+   }
+
+   public func fetchEnergyBurned(for workout: HKWorkout) async -> Double? {
+	  let energyType = HKQuantityType(.activeEnergyBurned)
+
+	  // Create the predicate for the specific workout
+	  let predicate = HKQuery.predicateForObjects(from: workout)
+
+	  // Create and execute the query
+	  return try? await withCheckedThrowingContinuation { continuation in
+		 let query = HKSampleQuery(
+			sampleType: energyType,
+			predicate: predicate,
+			limit: HKObjectQueryNoLimit,
+			sortDescriptors: nil
+		 ) { _, samples, error in
+			if let error = error {
+			   print("Error fetching energy burned: \(error)")
+			   continuation.resume(returning: nil)
+			   return
+			}
+
+			// Sum up all the energy samples
+			let totalEnergy = samples?.reduce(0.0) { total, sample in
+			   guard let quantity = (sample as? HKQuantitySample)?.quantity else { return total }
+			   return total + quantity.doubleValue(for: .kilocalorie())
+			}
+
+			continuation.resume(returning: totalEnergy)
+		 }
+
+		 healthStore.execute(query)
+	  }
    }
 
 }

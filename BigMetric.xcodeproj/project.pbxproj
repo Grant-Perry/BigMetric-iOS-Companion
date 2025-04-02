@@ -41,6 +41,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9BEF1E312D9D8AF80023FA37 /* Exceptions for "BigMetric" folder in "BigMetric Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Ext/WeatherGradient.swift,
+			);
+			target = 9B109A022D95F4EE009027E9 /* BigMetric Watch App */;
+		};
 		9BEFBC642D96269F00AA591E /* Exceptions for "BigMetric Watch App" folder in "BigMetric Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -63,6 +70,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				9BEFBCEE2D99A2D800AA591E /* Exceptions for "BigMetric" folder in "BigMetric iOS" target */,
+				9BEF1E312D9D8AF80023FA37 /* Exceptions for "BigMetric" folder in "BigMetric Watch App" target */,
 			);
 			path = BigMetric;
 			sourceTree = "<group>";
@@ -452,7 +460,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.56;
+				MARKETING_VERSION = 2.57;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -490,7 +498,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.56;
+				MARKETING_VERSION = 2.57;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

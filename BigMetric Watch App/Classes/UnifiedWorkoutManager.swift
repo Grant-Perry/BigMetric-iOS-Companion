@@ -94,6 +94,8 @@ class UnifiedWorkoutManager: NSObject,
 
    var shouldFinishWorkoutAfterSessionEnd: Bool = false
 
+   var energyBurned: Double = 0
+
    private let activityManager = CMMotionActivityManager()
    private var bufferedLocations: [CLLocation] = []
    private var bufferingTimer: Timer?
@@ -362,7 +364,8 @@ class UnifiedWorkoutManager: NSObject,
 		 "stepCount":     String(workoutStepCount),
 		 "weatherCity":   locationName,
 		 "weatherTemp":   weatherTemp,
-		 "weatherSymbol": weatherSymbol
+		 "weatherSymbol": weatherSymbol,
+		 "energyBurned": String(format: "%.0f", energyBurned)  // Add this line
 	  ]
 	  print("[UWM] buildMetadataDictionary => \(meta)")
 	  return meta
@@ -406,6 +409,7 @@ class UnifiedWorkoutManager: NSObject,
 	  locationName = "Unknown"
 	  weatherTemp = "--"
 	  weatherSymbol = ""
+	  energyBurned = 0
 
 	  // Ensure each fresh workout starts with this off.
 	  isSavingToHealthKit = false
@@ -649,6 +653,10 @@ class UnifiedWorkoutManager: NSObject,
 		 if s.quantityType == HKQuantityType.quantityType(forIdentifier: .heartRate) {
 			let hrUnit = HKUnit.count().unitDivided(by: .minute())
 			self.heartRate = s.mostRecentQuantity()?.doubleValue(for: hrUnit) ?? 0
+		 } else if s.quantityType == HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
+			// Add this else if block for energy burned
+			let energyUnit = HKUnit.kilocalorie()
+			self.energyBurned = s.sumQuantity()?.doubleValue(for: energyUnit) ?? 0
 		 }
 	  }
    }

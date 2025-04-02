@@ -3,7 +3,8 @@ import HealthKit
 import CoreLocation
 import Combine
 
-class PolyViewModel: ObservableObject {
+@MainActor
+class PolyViewModel: ObservableObject, @unchecked Sendable {
    @Published var workouts: [HKWorkout] = []
    @Published var isLoading: Bool = false
    @Published var endDate: Date = Date()
@@ -40,6 +41,7 @@ class PolyViewModel: ObservableObject {
    private let METADATA_KEY_AVERAGE_SPEED  = "averageSpeed"
    private let METADATA_KEY_WEATHER_TEMP   = "weatherTemp"
    private let METADATA_KEY_WEATHER_SYMBOL = "weatherSymbol"
+   private let METADATA_KEY_ENERGY_BURNED = "energyBurned"
    
    // ADD: Track filtered vs total counts for debugging
    private var totalWorkoutCount: Int = 0
@@ -97,7 +99,7 @@ class PolyViewModel: ObservableObject {
 			// Finally, keep only up to 'limit' of them for display.
 			let displaySlice = Array(filtered.prefix(self.limit))
 			
-			DispatchQueue.main.async {
+			await MainActor.run {
 			   if page == 0 {
 				  self.workouts = displaySlice
 			   } else {
@@ -106,7 +108,7 @@ class PolyViewModel: ObservableObject {
 			   self.isLoading = false
 			}
 		 } catch {
-			DispatchQueue.main.async {
+			await MainActor.run {
 			   print("Failed to load workouts: \(error)")
 			   self.isLoading = false
 			}
@@ -300,11 +302,18 @@ class PolyViewModel: ObservableObject {
 		 let query = HKSampleQuery(sampleType: HKObjectType.workoutType(),
 								   predicate: predicate,
 								   limit: limit,
-								   sortDescriptors: [sortDescriptor]) { _, result, error in
+								   sortDescriptors: [sortDescriptor]) { [weak self] _, result, error in
+			guard let self = self else {
+			   continuation.resume(returning: [])
+			   return
+			}
+			
 			if let error = error {
 			   continuation.resume(throwing: error)
 			} else if let workouts = result as? [HKWorkout] {
-			   self.totalWorkoutCount = workouts.count
+			   Task { @MainActor in
+				  self.totalWorkoutCount = workouts.count
+			   }
 			   print("DP - Initial HK query returned \(workouts.count) workouts")
 			   continuation.resume(returning: workouts)
 			} else {
@@ -332,7 +341,10 @@ class PolyViewModel: ObservableObject {
 		 }
 	  }
 	  
-	  self.filteredWorkoutCount = validWorkouts.count
+	  await MainActor.run {
+		 self.filteredWorkoutCount = validWorkouts.count
+	  }
+	  
 	  print("\nDP - fetchPagedWorkouts summary:")
 	  print("- Total workouts found: \(self.totalWorkoutCount)")
 	  print("- Workouts with valid routes: \(self.filteredWorkoutCount)")
@@ -434,5 +446,23 @@ class PolyViewModel: ObservableObject {
 		 setCachedCity("Unknown City", for: workout.uuid)
 		 return "Unknown City"
 	  }
+   }
+   
+   func fetchEnergyBurned(for workout: HKWorkout) -> Double? {
+	  // First check metadata
+	  if let metaEnergyStr = workout.metadata?[METADATA_KEY_ENERGY_BURNED] as? String,
+		 let energyValue = Double(metaEnergyStr) {
+		 print("DP - Found energyBurned as String: \(energyValue)")
+		 return energyValue
+	  }
+	  
+	  // Then check workout's direct energy burned property
+	  if let energy = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) {
+		 print("DP - Found energyBurned from workout: \(energy)")
+		 return energy
+	  }
+	  
+	  print("DP - No energyBurned found for workout \(workout.uuid)")
+	  return nil
    }
 }

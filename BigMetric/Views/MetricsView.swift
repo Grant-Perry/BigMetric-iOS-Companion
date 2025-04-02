@@ -122,35 +122,40 @@ public struct MetricsView: View {
 				  MetricBox(
 					 title: "Start",
 					 value: metricMeta.startDate.formatted(date: .abbreviated, time: .shortened),
-					 textSize: textSizeBig
+					 textSize: textSizeBig,
+					 iconName: "clock.arrow.circlepath"
 				  )
 
 				  // 2. End Time
 				  MetricBox(
 					 title: "End",
 					 value: endTime.formatted(date: .abbreviated, time: .shortened),
-					 textSize: textSizeBig
+					 textSize: textSizeBig,
+					 iconName: "clock.arrow.2.circlepath"
 				  )
 
 				  // 3. Distance
 				  MetricBox(
 					 title: "Distance",
 					 value: String(format: "%.2f", workout.distance),
-					 textSize: textSizeBig
+					 textSize: textSizeBig,
+					 iconName: "ruler"
 				  )
 
 				  // 4. Total Time
 				  MetricBox(
 					 title: "Total Time",
 					 value: metricMeta.totalTime,
-					 textSize: textSizeBig
+					 textSize: textSizeBig,
+					 iconName: "stopwatch"
 				  )
 
 				  // 5. Average Pace
 				  MetricBox(
 					 title: "Avg Pace",
 					 value: averagePace,
-					 textSize: textSizeBig
+					 textSize: textSizeBig,
+					 iconName: "speedometer"
 				  )
 
 				  // 6. Average Speed
@@ -158,7 +163,32 @@ public struct MetricsView: View {
 					 MetricBox(
 						title: "Avg Speed",
 						value: String(format: "%.1f", avgSpeed),
-						textSize: textSizeBig
+						textSize: textSizeBig,
+						iconName: "gauge.medium"
+					 )
+				  }
+
+				  // 7. Steps
+				  if let steps = metricMeta.stepCount {
+					 MetricBox(
+						title: "Steps",
+						value: {
+						   let formatter = NumberFormatter()
+						   formatter.numberStyle = .decimal
+						   return formatter.string(from: NSNumber(value: steps)) ?? "\(steps)"
+						}(),
+						textSize: textSizeBig,
+						iconName: "figure.walk"
+					 )
+				  }
+
+				  // Energy burned section
+				  if let energyBurned = metricMeta.energyBurned, energyBurned > 0 {
+					 MetricBox(
+						title: "Energy",
+						value: String(format: "%.0f cal", energyBurned),
+						textSize: textSizeBig,
+						iconName: "flame.fill"
 					 )
 				  }
 			   }
@@ -172,35 +202,7 @@ public struct MetricsView: View {
    }
 }
 
-struct MetricBox: View {
-   let title: String
-   let value: String
-   let textSize: Int
 
-   var body: some View {
-	  VStack(alignment: .leading, spacing: 4) {
-		 Text(title)
-			.font(.system(size: CGFloat(textSize - 15)))
-			.foregroundColor(.white)
-			.opacity(0.7)
-
-		 HStack {
-			Text(value)
-			   .font(.system(size: CGFloat(textSize)).weight(.light))
-			   .foregroundColor(.white)
-			   .opacity(0.65)
-			   .minimumScaleFactor(0.3)
-			   .lineLimit(1)
-
-			Spacer()
-		 }
-		 .padding(12)
-		 .frame(maxWidth: .infinity)
-		 .background(Color.white.opacity(0.15))
-		 .cornerRadius(15)
-	  }
-   }
-}
 
 private extension Color {
    static let systemBackground = Color(UIColor.systemBackground)
