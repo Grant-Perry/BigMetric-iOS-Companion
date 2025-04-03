@@ -5,6 +5,8 @@ struct CompassView: View {
    @State var screenBounds = WKInterfaceDevice.current().screenBounds
    @ObservedObject var unifiedWorkoutManager: UnifiedWorkoutManager
    @State private var rotateBGMode: Bool = false
+   @State private var bgRotation: Double = 0
+   @State private var arrowRotation: Double = 0
 
    var body: some View {
 	  ZStack {
@@ -12,6 +14,8 @@ struct CompassView: View {
 			.resizable()
 			.scaledToFit()
 			.frame(width: screenBounds.width * 0.9, height: screenBounds.width * 0.9)
+			.rotationEffect(.degrees(rotateBGMode ? -unifiedWorkoutManager.course : 0))
+			.animation(.spring(response: 0.5), value: rotateBGMode)
 
 		 Circle()
 			.stroke(Color.white.opacity(0.5), lineWidth: 4)
@@ -28,9 +32,10 @@ struct CompassView: View {
 			.scaledToFit()
 			.frame(width: 50, height: 110)
 			.foregroundColor(.green)
-			.rotationEffect(.degrees(unifiedWorkoutManager.course))
+			.rotationEffect(.degrees(rotateBGMode ? 0 : unifiedWorkoutManager.course))
 			.opacity(0.95)
 			.scaleEffect(1.2)
+			.animation(.spring(response: 0.5), value: rotateBGMode)
 
 		 Text(unifiedWorkoutManager.heading)
 			.font(.title3)

@@ -14,9 +14,13 @@ struct PaginatedWorkoutsView: View {
 			List(polyViewModel.workouts, id: \.uuid) { workout in
 			   NavigationLink(destination: FullMapView(workout: workout, polyViewModel: polyViewModel)) {
 				  WorkoutRouteView(workout: workout, polyViewModel: polyViewModel)
+					 .listRowInsets(EdgeInsets())
+					 .listRowSeparator(.hidden)
+					 .listRowBackground(Color.clear)
 			   }
 			   .offset(y: -15)
 			}
+			.listStyle(.plain)
 
 			if polyViewModel.isLoading {
 			   ProgressView()

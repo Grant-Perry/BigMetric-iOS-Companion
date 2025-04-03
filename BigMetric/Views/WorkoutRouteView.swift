@@ -79,10 +79,13 @@ struct WorkoutRouteView: View {
 			.padding(.horizontal, 16)
 			.padding(.bottom, 12)
 	  }
-	  .background(WeatherGradient(from: weatherSymbol).gradient)
-	  .cornerRadius(16)
+	  .background(
+		 WeatherGradient(from: weatherSymbol).gradient
+			.cornerRadius(24)
+	  )
+	  .clipShape(RoundedRectangle(cornerRadius: 24))
 	  .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-	  .padding(.horizontal, 8)
+	  .padding(.horizontal, 12)
 	  .opacity(appeared ? 1 : 0)
 	  .offset(y: appeared ? 0 : 50)
 	  .animation(.spring(response: 0.6, dampingFraction: 0.8), value: appeared)
@@ -91,35 +94,45 @@ struct WorkoutRouteView: View {
 
    @ViewBuilder
    private func HeaderSection() -> some View {
-	  VStack(alignment: .leading, spacing: 6) {
-		 if let routeDate = routeStartDate {
-			Text(routeDate, formatter: dateFormatter)
-			   .font(.system(size: 15))
-			   .foregroundColor(.white.opacity(0.9))
-			   .padding(.top, 24)
-		 }
-
-		 if let address = address {
-			Text(address.city)
-			   .font(.system(size: 28, weight: .bold))
-			   .foregroundColor(.white)
-		 } else {
-			Text(cityName)
-			   .font(.system(size: 28, weight: .bold))
-			   .foregroundColor(.white)
-		 }
-
-		 if let wTemp = weatherTemp, let wSymbol = weatherSymbol {
-			HStack(spacing: 6) {
-			   Image(systemName: wSymbol)
-				  .font(.system(size: 16))
-			   Text("\(wTemp)°")
-				  .font(.system(size: 16, weight: .medium))
+	  HStack(alignment: .top) {
+		 // Left side with date and city
+		 VStack(alignment: .leading, spacing: 6) {
+			if let routeDate = routeStartDate {
+			   Text(routeDate, formatter: dateFormatter)
+				  .font(.system(size: 15))
+				  .foregroundColor(.white.opacity(0.9))
+				  .padding(.top, 24)
 			}
-			.foregroundColor(.white.opacity(0.9))
+
+			if let address = address {
+			   Text(address.city)
+				  .font(.system(size: 28, weight: .bold))
+				  .foregroundColor(.white)
+			} else {
+			   Text(cityName)
+				  .font(.system(size: 28, weight: .bold))
+				  .foregroundColor(.white)
+			}
+		 }
+
+		 Spacer()
+
+		 // Right side with weather
+		 if let wTemp = weatherTemp, let wSymbol = weatherSymbol {
+			VStack(alignment: .trailing, spacing: 4) {
+			   Image(systemName: wSymbol)
+				  .font(.system(size: 48))
+				  .symbolRenderingMode(.palette)
+				  .foregroundStyle(.white)
+			   Text("\(wTemp)°")
+				  .font(.system(size: 32, weight: .medium))
+				  .foregroundColor(.white)
+			}
+			.padding(.top, 24)
+			.padding(.trailing, 8)
 		 }
 	  }
-	  .frame(maxWidth: .infinity, alignment: .leading)
+	  .frame(maxWidth: .infinity)
 	  .padding(.horizontal, 16)
    }
 
@@ -128,7 +141,7 @@ struct WorkoutRouteView: View {
 	  LazyVGrid(columns: [
 		 GridItem(.flexible()),
 		 GridItem(.flexible())
-	  ], spacing: 8) {
+	  ], spacing: 12) {
 		 WorkoutMetricCard(title: "Duration", value: formattedTotalTime, icon: "clock.fill")
 		 WorkoutMetricCard(title: "Distance", value: String(format: "%.2f mi", distance), icon: "figure.walk")
 		 WorkoutMetricCard(title: "Pace", value: formatPaceMinMi(), icon: "speedometer")
@@ -205,7 +218,7 @@ struct WorkoutMetricCard: View {
 			Text(title)
 			   .font(.system(size: 14))
 		 }
-		 .foregroundColor(.white.opacity(0.8))
+		 .foregroundColor(.white.opacity(0.9))
 
 		 Text(value)
 			.font(.system(size: 20, weight: .semibold))
@@ -214,7 +227,7 @@ struct WorkoutMetricCard: View {
 	  .frame(maxWidth: .infinity, alignment: .leading)
 	  .padding(.vertical, 12)
 	  .padding(.horizontal, 16)
-	  .background(Color.white.opacity(0.15))
-	  .cornerRadius(12)
+	  .background(Color.black.opacity(0.15))
+	  .cornerRadius(16)
    }
 }
