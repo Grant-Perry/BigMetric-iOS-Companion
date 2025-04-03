@@ -39,32 +39,21 @@ struct RootBigMetricView: View {
 		 .tag(4)
 
 		 CompassView(
-			unifiedWorkoutManager: unifiedWorkoutManager,
-			heading: unifiedWorkoutManager.course,
-			routeHeading: unifiedWorkoutManager.course
+			unifiedWorkoutManager: unifiedWorkoutManager
 		 )
 		 .tabItem { Image(systemName: "circle.fill") }
 		 .tag(5)
 
-
 		 AltitudeView(unifiedWorkoutManager: unifiedWorkoutManager)
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(6)
-
-		 // ... etc. for other tabs
 	  }
 	  .onAppear {
-		 // Now it's safe to reference self in a closure.
-		 // The entire RootContentView is fully initialized.
 		 unifiedWorkoutManager.onEndAndShowSummary = {
-			// Move to tab #4 (the summary)
 			self.selectedTab = 4
 		 }
 
-		 // Optionally do HK auth here:
 		 unifiedWorkoutManager.requestHKAuth()
-
-		 // Start on tab #2
 		 selectedTab = 2
 	  }
 	  .tabViewStyle(PageTabViewStyle())

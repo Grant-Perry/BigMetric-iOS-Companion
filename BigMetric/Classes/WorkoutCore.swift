@@ -295,8 +295,11 @@ public class WorkoutCore {
 
    public func update(from workout: HKWorkout) {
 	  self.distance = workout.totalDistance?.doubleValue(for: .mile()) ?? 0.0
-	  // Energy burned is already available directly from the workout
-	  let energyBurned = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0.0
+
+	  // CHANGE: Use statistics(for:) instead of deprecated totalEnergyBurned
+	  let energyStatistics = workout.statistics(for: HKQuantityType(.activeEnergyBurned))
+	  let energyBurned = energyStatistics?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0.0
+
 	  print("[WorkoutCore] Energy burned: \(energyBurned) kcal")
    }
 

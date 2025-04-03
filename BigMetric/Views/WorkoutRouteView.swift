@@ -5,7 +5,6 @@ struct WorkoutRouteView: View {
    let workout: HKWorkout
    @ObservedObject var polyViewModel: PolyViewModel
    @State private var metricMeta: MetricMeta? = nil
-
    @State private var cityName: String = "Loading..."
    @State private var distance: Double = 0.0
    @State private var totalTime: TimeInterval = 0.0
@@ -18,6 +17,7 @@ struct WorkoutRouteView: View {
    @State private var errorMessage: String = ""
    @State private var address: Address? = nil
    @State private var isLoading = false
+   @State private var appeared = false
 
    private var dateFormatter: DateFormatter {
 	  let df = DateFormatter()
@@ -31,149 +31,140 @@ struct WorkoutRouteView: View {
 	  return df
    }
 
-   private struct MetricBox: View {
-	  let title: String
-	  let value: String
-
-	  var body: some View {
-		 VStack(spacing: 6) {
-			Text(title)
-			   .font(.system(size: 15, weight: .medium))
-			   .foregroundColor(.white.opacity(0.9))
-			Text(value)
-			   .font(.system(size: 20, weight: .bold))
-			   .foregroundColor(.white)
+   var body: some View {
+	  ScrollView {
+		 VStack(spacing: 4) {
+			if isLoading {
+			   LoadingState()
+			} else if isError {
+			   ErrorState(message: errorMessage)
+			} else {
+			   ContentState()
+			}
 		 }
-		 .frame(maxWidth: .infinity)
+		 .padding(.vertical, 2)
+	  }
+	  .scrollTargetBehavior(.viewAligned)
+	  .task {
+		 await loadWorkoutData()
 	  }
    }
 
-   var body: some View {
-	  VStack(spacing: 8) {
-		 if isLoading {
-			ProgressView("Loading Workouts...")
-			   .progressViewStyle(CircularProgressViewStyle(tint: .white))
-		 } else if isError {
-			Text(errorMessage)
-			   .font(.system(size: 17))
-			   .foregroundColor(.red)
-			   .frame(maxWidth: .infinity, alignment: .center)
+   // MARK: - View Components
+
+   @ViewBuilder
+   private func LoadingState() -> some View {
+	  ProgressView("Loading workout data...")
+		 .progressViewStyle(CircularProgressViewStyle())
+		 .frame(maxWidth: .infinity, minHeight: 200)
+		 .background(Color.gray.opacity(0.1))
+		 .cornerRadius(16)
+   }
+
+   @ViewBuilder
+   private func ErrorState(message: String) -> some View {
+	  Text(message)
+		 .font(.system(size: 17))
+		 .foregroundColor(.red)
+		 .frame(maxWidth: .infinity, minHeight: 200)
+		 .background(Color.red.opacity(0.1))
+		 .cornerRadius(16)
+   }
+
+   @ViewBuilder
+   private func ContentState() -> some View {
+	  VStack(spacing: 12) {
+		 HeaderSection()
+		 MetricsGrid()
+			.padding(.horizontal, 16)
+			.padding(.bottom, 12)
+	  }
+	  .background(WeatherGradient(from: weatherSymbol).gradient)
+	  .cornerRadius(16)
+	  .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+	  .padding(.horizontal, 8)
+	  .opacity(appeared ? 1 : 0)
+	  .offset(y: appeared ? 0 : 50)
+	  .animation(.spring(response: 0.6, dampingFraction: 0.8), value: appeared)
+	  .onAppear { appeared = true }
+   }
+
+   @ViewBuilder
+   private func HeaderSection() -> some View {
+	  VStack(alignment: .leading, spacing: 6) {
+		 if let routeDate = routeStartDate {
+			Text(routeDate, formatter: dateFormatter)
+			   .font(.system(size: 15))
+			   .foregroundColor(.white.opacity(0.9))
+			   .padding(.top, 24)
+		 }
+
+		 if let address = address {
+			Text(address.city)
+			   .font(.system(size: 28, weight: .bold))
+			   .foregroundColor(.white)
 		 } else {
-			// Main content with workout details
-			VStack(spacing: 12) {
-			   HStack(alignment: .top) {
-				  VStack(alignment: .leading, spacing: 6) {
-					 if let address = address {
-						Text(address.city)
-						   .font(.system(size: 28, weight: .heavy))
-						   .foregroundColor(.white)
-						   .shadow(radius: 2)
-						   .lineLimit(1)
-						   .truncationMode(.tail)
-						   .frame(maxWidth: .infinity, alignment: .leading)
-					 } else {
-						Text(cityName)
-						   .font(.system(size: 28, weight: .heavy))
-						   .foregroundColor(.white)
-						   .shadow(radius: 2)
-						   .lineLimit(1)
-						   .truncationMode(.tail)
-						   .frame(maxWidth: .infinity, alignment: .leading)
-						   .minimumScaleFactor(0.5)
-						   .scaledToFit()
-					 }
+			Text(cityName)
+			   .font(.system(size: 28, weight: .bold))
+			   .foregroundColor(.white)
+		 }
 
-					 if let wTemp = weatherTemp, let wSymbol = weatherSymbol {
-						HStack(spacing: 8) {
-						   Image(systemName: wSymbol)
-							  .foregroundColor(.white)
-							  .font(.system(size: 16))
-						   Text("\(wTemp)°")
-							  .font(.system(size: 16, weight: .medium))
-							  .foregroundColor(.white)
-						}
-						.padding(.vertical, 4)
-						.padding(.horizontal, 10)
-						.background(.ultraThinMaterial)
-						.cornerRadius(20)
-					 }
-				  }
-
-				  Spacer()
-
-				  if let routeDate = routeStartDate {
-					 VStack(alignment: .trailing, spacing: 4) {
-						Text(routeDate, formatter: dateFormatter)
-						   .font(.system(size: 17, weight: .medium))
-						   .foregroundColor(.white)
-						Text(routeDate, formatter: timeFormatter)
-						   .font(.system(size: 15))
-						   .foregroundColor(.white.opacity(0.9))
-					 }
-				  }
-			   }
-			   .padding(.horizontal, 16)
-			   .padding(.vertical, 12)
-
-			   if let symbol = weatherSymbol, let temp = weatherTemp {
-				  HStack(alignment: .center, spacing: 0) {
-					 Spacer()
-					 Text("\(temp)°")
-						.font(.system(size: 55))
-						.offset(x: 12)
-					 Image(systemName: symbol)
-						.font(.system(size: 60))
-						.foregroundColor(.white)
-						.padding(.leading, 1)
-				  }
-				  .padding(.horizontal, 16)
-				  .padding(.top, -35)
-				  .opacity(0.8)
-			   }
-
-			   // Metrics row
-			   HStack(alignment: .center, spacing: 0) {
-				  MetricBox(title: "Duration", value: formattedTotalTime)
-				  Divider().background(.white.opacity(0.3)).frame(width: 1, height: 40)
-				  MetricBox(title: "Pace", value: formatPaceMinMi())
-				  Divider().background(.white.opacity(0.3)).frame(width: 1, height: 40)
-				  MetricBox(title: "Distance", value: String(format: "%.2f mi", distance))
-			   }
-			   .padding(.horizontal, 16)
-			   .padding(.vertical, 12)
-			   .background(.ultraThinMaterial)
-			   .cornerRadius(12)
+		 if let wTemp = weatherTemp, let wSymbol = weatherSymbol {
+			HStack(spacing: 6) {
+			   Image(systemName: wSymbol)
+				  .font(.system(size: 16))
+			   Text("\(wTemp)°")
+				  .font(.system(size: 16, weight: .medium))
 			}
-			.background(WeatherGradient(from: weatherSymbol).gradient)
-			.clipShape(RoundedRectangle(cornerRadius: 12))
+			.foregroundColor(.white.opacity(0.9))
 		 }
 	  }
-	  .padding(.horizontal, 12)
-	  .padding(.vertical, 8)
-	  .cornerRadius(16)
-	  .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-	  .task {
-		 do {
-			cityName = await polyViewModel.fetchCityName(for: workout) ?? "Unknown City"
-			distance = await polyViewModel.fetchDistance(for: workout) ?? 0
-			totalTime = polyViewModel.fetchDuration(for: workout)
-			formattedTotalTime = formatDuration(totalTime)
-			averageSpeed = polyViewModel.fetchAverageSpeed(for: workout)
-			routeStartDate = workout.startDate
+	  .frame(maxWidth: .infinity, alignment: .leading)
+	  .padding(.horizontal, 16)
+   }
 
-			if let (temp, symbol) = await polyViewModel.fetchWeather(for: workout) {
-			   weatherTemp = temp
-			   weatherSymbol = symbol
-			}
+   @ViewBuilder
+   private func MetricsGrid() -> some View {
+	  LazyVGrid(columns: [
+		 GridItem(.flexible()),
+		 GridItem(.flexible())
+	  ], spacing: 8) {
+		 WorkoutMetricCard(title: "Duration", value: formattedTotalTime, icon: "clock.fill")
+		 WorkoutMetricCard(title: "Distance", value: String(format: "%.2f mi", distance), icon: "figure.walk")
+		 WorkoutMetricCard(title: "Pace", value: formatPaceMinMi(), icon: "speedometer")
 
-			if distance == 0 && cityName == "Unknown City" {
-			   throw NSError(domain: "com.BigPoly", code: 404, userInfo: [NSLocalizedDescriptionKey: "No workout data available"])
-			}
-		 } catch {
-			isError = true
-			errorMessage = "Failed to load workout data. Please try again."
-			print("Error fetching data: \(error.localizedDescription)")
+		 if let temp = weatherTemp {
+			WorkoutMetricCard(title: "Temperature", value: "\(temp)°", icon: "thermometer")
 		 }
+	  }
+   }
+
+   // MARK: - Helper Methods
+
+   private func loadWorkoutData() async {
+	  do {
+		 isLoading = true
+		 cityName = await polyViewModel.fetchCityName(for: workout) ?? "Unknown Location"
+		 distance = await polyViewModel.fetchDistance(for: workout) ?? 0
+		 totalTime = polyViewModel.fetchDuration(for: workout)
+		 formattedTotalTime = formatDuration(totalTime)
+		 averageSpeed = polyViewModel.fetchAverageSpeed(for: workout)
+		 routeStartDate = workout.startDate
+
+		 if let (temp, symbol) = await polyViewModel.fetchWeather(for: workout) {
+			weatherTemp = temp
+			weatherSymbol = symbol
+		 }
+
+		 if distance == 0 && cityName == "Unknown Location" {
+			throw NSError(domain: "com.BigPoly", code: 404,
+						  userInfo: [NSLocalizedDescriptionKey: "No workout data available"])
+		 }
+		 isLoading = false
+	  } catch {
+		 isError = true
+		 errorMessage = "Failed to load workout data. Please try again."
+		 print("Error fetching data: \(error.localizedDescription)")
 	  }
    }
 
@@ -195,22 +186,35 @@ struct WorkoutRouteView: View {
 	  let pace = minutes / distance
 	  let wholeMinutes = Int(pace)
 	  let seconds = Int((pace - Double(wholeMinutes)) * 60)
-	  return String(format: "%d:%02d", wholeMinutes, seconds)
+	  return String(format: "%d:%02d min/mi", wholeMinutes, seconds)
    }
 }
 
-//struct WorkoutRouteView_Previews: PreviewProvider {
-//   static var previews: some View {
-//	  let dummyWorkout = HKWorkout(activityType: .running,
-//								   start: Date(),
-//								   end: Date().addingTimeInterval(3600),
-//								   duration: 3600,
-//								   totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: 500),
-//								   totalDistance: HKQuantity(unit: .mile(), doubleValue: 5),
-//								   metadata: nil)
-//
-//	  WorkoutRouteView(workout: dummyWorkout, polyViewModel: PolyViewModel())
-//		 .background(Color.black)
-//		 .previewDisplayName("Workout Route Preview")
-//   }
-//}
+// MARK: - Supporting Views
+
+struct WorkoutMetricCard: View {
+   let title: String
+   let value: String
+   let icon: String
+
+   var body: some View {
+	  VStack(alignment: .leading, spacing: 4) {
+		 HStack {
+			Image(systemName: icon)
+			   .font(.system(size: 14))
+			Text(title)
+			   .font(.system(size: 14))
+		 }
+		 .foregroundColor(.white.opacity(0.8))
+
+		 Text(value)
+			.font(.system(size: 20, weight: .semibold))
+			.foregroundColor(.white)
+	  }
+	  .frame(maxWidth: .infinity, alignment: .leading)
+	  .padding(.vertical, 12)
+	  .padding(.horizontal, 16)
+	  .background(Color.white.opacity(0.15))
+	  .cornerRadius(12)
+   }
+}

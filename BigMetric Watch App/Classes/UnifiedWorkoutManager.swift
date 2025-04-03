@@ -66,6 +66,23 @@ class UnifiedWorkoutManager: NSObject,
    var heartRate: Double = 0 {
 	  didSet { heartRateReadings.append(heartRate) }
    }
+
+   public func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+	  // If the heading is invalid, just return
+	  guard newHeading.headingAccuracy >= 0 else {
+		 return
+	  }
+
+	  // Use trueHeading if >= 0, else fall back to magnetic
+	  let updatedCourse = (newHeading.trueHeading >= 0)
+	  ? newHeading.trueHeading
+	  : newHeading.magneticHeading
+
+	  course = updatedCourse
+
+	  // Convert numeric heading to a cardinal direction string
+	  heading = CardinalDirection(course: updatedCourse).rawValue
+   }
    var heartRateReadings: [Double] = []
 
    var LMDelegate = CLLocationManager()
@@ -228,6 +245,7 @@ class UnifiedWorkoutManager: NSObject,
 
 	  weIsRecording = true
 	  LMDelegate.startUpdatingLocation()
+	  LMDelegate.startUpdatingHeading()
 	  startPedometer(true)
 	  startTimer()
    }
