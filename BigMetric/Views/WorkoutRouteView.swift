@@ -80,8 +80,15 @@ struct WorkoutRouteView: View {
 			.padding(.bottom, 12)
 	  }
 	  .background(
-		 WeatherGradient(from: weatherSymbol).gradient
-			.cornerRadius(24)
+		 Group {
+			Image(weatherSymbol != nil ?
+				  WeatherGradient(from: weatherSymbol).backgroundImage :
+					 WeatherGradient.default.backgroundImage)
+			.resizable()
+			.aspectRatio(contentMode: .fill)
+			.opacity(0.95)
+			Color.black.opacity(0.15)
+		 }
 	  )
 	  .clipShape(RoundedRectangle(cornerRadius: 24))
 	  .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
@@ -142,12 +149,12 @@ struct WorkoutRouteView: View {
 		 GridItem(.flexible()),
 		 GridItem(.flexible())
 	  ], spacing: 12) {
-		 WorkoutMetricCard(title: "Duration", value: formattedTotalTime, icon: "clock.fill")
-		 WorkoutMetricCard(title: "Distance", value: String(format: "%.2f mi", distance), icon: "figure.walk")
-		 WorkoutMetricCard(title: "Pace", value: formatPaceMinMi(), icon: "speedometer")
+		 WorkoutMetricCard(title: "Duration", value: formattedTotalTime, icon: "clock.fill", weatherSymbol: weatherSymbol)
+		 WorkoutMetricCard(title: "Distance", value: String(format: "%.2f mi", distance), icon: "figure.walk", weatherSymbol: weatherSymbol)
+		 WorkoutMetricCard(title: "Pace", value: formatPaceMinMi(), icon: "speedometer", weatherSymbol: weatherSymbol)
 
 		 if let temp = weatherTemp {
-			WorkoutMetricCard(title: "Temperature", value: "\(temp)°", icon: "thermometer")
+			WorkoutMetricCard(title: "Temperature", value: "\(temp)°", icon: "thermometer", weatherSymbol: weatherSymbol)
 		 }
 	  }
    }
@@ -209,6 +216,7 @@ struct WorkoutMetricCard: View {
    let title: String
    let value: String
    let icon: String
+   let weatherSymbol: String?
 
    var body: some View {
 	  VStack(alignment: .leading, spacing: 4) {

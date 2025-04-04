@@ -15,26 +15,26 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
    ) ?? Date().addingTimeInterval(-30 * 24 * 3600)
    @Published var limit: Int = 45
    @Published var shortRouteFilter: Bool = false // default to off
-   
+
    /// Cache for city names keyed by workout UUID.
    private var cityNameCache: [UUID: String] = [:]
-   
+
    /// Cache for entire route (coordinates) keyed by workout UUID.
    private var routeCache: [UUID: [CLLocationCoordinate2D]] = [:]
-   
+
    /// Cache for computed or metadata-derived distance keyed by workout UUID.
    private var distanceCache: [UUID: Double] = [:]
-   
+
    /// Cache for weather info keyed by workout UUID. (temp, symbol)
    private var weatherCache: [UUID: (String?, String?)] = [:]
-   
+
    /// NEW: Cache for full CLLocation data, used to fetch timestamps.
    private var locationDataCache: [UUID: [CLLocation]] = [:]
-   
+
    private let cacheQueue = DispatchQueue(label: "com.BigPoly.cacheQueue")
-   
+
    private let healthStore = HKHealthStore()
-   
+
    /// Common user-defined metadata keys you might store in the watch app
    private let METADATA_KEY_FINAL_DISTANCE = "finalDistance"
    private let METADATA_KEY_FINAL_DURATION = "finalDuration"
@@ -42,11 +42,11 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
    private let METADATA_KEY_WEATHER_TEMP   = "weatherTemp"
    private let METADATA_KEY_WEATHER_SYMBOL = "weatherSymbol"
    private let METADATA_KEY_ENERGY_BURNED = "energyBurned"
-   
+
    // ADD: Track filtered vs total counts for debugging
    private var totalWorkoutCount: Int = 0
    private var filteredWorkoutCount: Int = 0
-   
+
    /// Call HealthKit permission as soon as this ViewModel is created to ensure compliance.
    init() {
 	  Task {
@@ -57,7 +57,7 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 }
 	  }
    }
-   
+
    /// Request HealthKit authorization up front.
    func requestHealthKitPermission() async throws {
 	  let typesToRead: Set<HKObjectType> = [
@@ -66,12 +66,12 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 	  ]
 	  try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
    }
-   
+
    /// Loads workouts in pages, fetching more from HK to account for short-route filtering so we don't lose them all.
    func loadWorkouts(page: Int) {
 	  guard !isLoading else { return }
 	  isLoading = true
-	  
+
 	  Task { [weak self] in
 		 guard let self = self else { return }
 		 do {
@@ -83,7 +83,7 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 			   limit: bigLimit,
 			   page: page
 			)
-			
+
 			// If shortRouteFilter is on, exclude <0.1 mile workouts, but do it after we fetch enough from HK.
 			var filtered: [HKWorkout] = []
 			if self.shortRouteFilter {
@@ -95,10 +95,10 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 			} else {
 			   filtered = rawWorkouts
 			}
-			
+
 			// Finally, keep only up to 'limit' of them for display.
 			let displaySlice = Array(filtered.prefix(self.limit))
-			
+
 			await MainActor.run {
 			   if page == 0 {
 				  self.workouts = displaySlice
@@ -115,15 +115,15 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 }
 	  }
    }
-   
+
    /// Fetch distance from metadata if available; else route-based calculation.
    func fetchDistance(for workout: HKWorkout) async -> Double? {
 	  if let cached = distanceCache[workout.uuid] {
 		 return cached
 	  }
-	  
+
 	  print("DP - Checking METADATA for workout \(workout.uuid): META: \(String(describing: workout.metadata))")
-	  
+
 	  // finalDistance can be stored as string or double
 	  if let metaDistStr = workout.metadata?[METADATA_KEY_FINAL_DISTANCE] as? String,
 		 let distDouble = Double(metaDistStr) {
@@ -135,20 +135,20 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 distanceCache[workout.uuid] = numericDist
 		 return numericDist
 	  }
-	  
+
 	  // fallback: compute from route
 	  guard let coords = await fetchDetailedRouteData(for: workout), !coords.isEmpty else {
 		 print("DP - No route coords or empty route for workout \(workout.uuid), distance = 0")
 		 distanceCache[workout.uuid] = 0
 		 return 0
 	  }
-	  
+
 	  let distance = coords.map { $0.location }.calcDistance
 	  print("DP - Calculated distance from route: \(distance)")
 	  distanceCache[workout.uuid] = distance
 	  return distance
    }
-   
+
    /// If watch wrote finalDuration in metadata, use it; else default to workout.duration
    func fetchDuration(for workout: HKWorkout) -> TimeInterval {
 	  if let metaDurStr = workout.metadata?[METADATA_KEY_FINAL_DURATION] as? String,
@@ -163,7 +163,7 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 	  print("DP - No finalDuration in metadata, using workout.duration: \(workout.duration)")
 	  return workout.duration
    }
-   
+
    /// If the watch wrote averageSpeed, read it. Otherwise return nil.
    func fetchAverageSpeed(for workout: HKWorkout) -> Double? {
 	  if let metaSpeedStr = workout.metadata?[METADATA_KEY_AVERAGE_SPEED] as? String,
@@ -178,7 +178,7 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 	  print("DP - No averageSpeed in metadata for workout \(workout.uuid)")
 	  return nil
    }
-   
+
    /// Fetch weather from metadata. If missing, attempt a fallback approach (currently none).
    func fetchWeather(for workout: HKWorkout) async -> (String?, String?)? {
 	  if let cached = weatherCache[workout.uuid] {
@@ -187,11 +187,11 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 			return cached
 		 }
 	  }
-	  
+
 	  // If watch wrote weather metadata, validate it
 	  let metaTemp = workout.metadata?[METADATA_KEY_WEATHER_TEMP] as? String
 	  let metaSymbol = workout.metadata?[METADATA_KEY_WEATHER_SYMBOL] as? String
-	  
+
 	  if let tempVal = metaTemp,
 		 let symbolVal = metaSymbol,
 		 !tempVal.isEmpty,
@@ -200,22 +200,22 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 weatherCache[workout.uuid] = (tempVal, symbolVal)
 		 return (tempVal, symbolVal)
 	  }
-	  
+
 	  print("DP - Invalid or missing weather data for \(workout.uuid)")
 	  return nil
    }
-   
+
    /// Returns the entire array of location data for the given workout, for time-based display, etc.
    func fetchFullLocationData(for workout: HKWorkout) async -> [CLLocation]? {
 	  if let existing = locationDataCache[workout.uuid] {
 		 return existing
 	  }
-	  
+
 	  guard let routes = await getWorkoutRoute(workout: workout), !routes.isEmpty else {
 		 locationDataCache[workout.uuid] = []
 		 return []
 	  }
-	  
+
 	  var fullData: [CLLocation] = []
 	  for route in routes {
 		 let locs = await getCLocationDataForRoute(routeToExtract: route)
@@ -225,20 +225,20 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 	  print("DP - fetchFullLocationData => Found \(fullData.count) location points for workout \(workout.uuid)")
 	  return fullData
    }
-   
+
    /// Return just the coordinate array (cached).
    func fetchDetailedRouteData(for workout: HKWorkout) async -> [CLLocationCoordinate2D]? {
 	  if let cachedRoute = routeCache[workout.uuid] {
 		 print("DP - Using cached route data for \(workout.uuid)")
 		 return cachedRoute
 	  }
-	  
+
 	  guard let routes = await getWorkoutRoute(workout: workout),
 			!routes.isEmpty else {
 		 print("DP - No routes available for \(workout.uuid)")
 		 return nil
 	  }
-	  
+
 	  var allCoordinates: [CLLocationCoordinate2D] = []
 	  for route in routes {
 		 let locations = await getCLocationDataForRoute(routeToExtract: route)
@@ -246,45 +246,45 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 			allCoordinates.append(contentsOf: locations.map { $0.coordinate })
 		 }
 	  }
-	  
+
 	  if allCoordinates.count >= 2 {
 		 routeCache[workout.uuid] = allCoordinates
 		 print("DP - Cached \(allCoordinates.count) coordinates for \(workout.uuid)")
 		 return allCoordinates
 	  }
-	  
+
 	  print("DP - No valid coordinates found for \(workout.uuid)")
 	  return nil
    }
-   
+
    private func hasValidRouteData(_ workout: HKWorkout) async -> Bool {
 	  print("\nDP - Checking route data for workout: \(workout.uuid)")
 	  print("DP - Workout date: \(workout.startDate)")
-	  
+
 	  guard let routes = await getWorkoutRoute(workout: workout),
 			!routes.isEmpty else {
 		 print("DP - No routes found")
 		 return false
 	  }
-	  
+
 	  // Check if we can actually get coordinate data
 	  for route in routes {
 		 let locations = await getCLocationDataForRoute(routeToExtract: route)
 		 if locations.count >= 2 { // Need at least 2 points for a valid route line
 			print("DP - Found valid route with \(locations.count) locations")
-			
+
 			// Pre-cache the route data since we already have it
 			let coordinates = locations.map { $0.coordinate }
 			routeCache[workout.uuid] = coordinates
-			
+
 			return true
 		 }
 	  }
-	  
+
 	  print("DP - No valid route data found")
 	  return false
    }
-   
+
    /// Adjusted strategy: we rely on a larger limit from the caller if short-route filtering is on,
    /// then we still only return up to 'limit' items from HK.
    func fetchPagedWorkouts(startDate: Date,
@@ -295,9 +295,9 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 												  end: endDate,
 												  options: [.strictStartDate])
 	  let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-	  
+
 	  print("\nDP - Fetching workouts between \(startDate) and \(endDate)")
-	  
+
 	  let allWorkouts: [HKWorkout] = try await withCheckedThrowingContinuation { continuation in
 		 let query = HKSampleQuery(sampleType: HKObjectType.workoutType(),
 								   predicate: predicate,
@@ -307,7 +307,7 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 			   continuation.resume(returning: [])
 			   return
 			}
-			
+
 			if let error = error {
 			   continuation.resume(throwing: error)
 			} else if let workouts = result as? [HKWorkout] {
@@ -322,9 +322,9 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 }
 		 self.healthStore.execute(query)
 	  }
-	  
+
 	  var validWorkouts: [HKWorkout] = []
-	  
+
 	  for workout in allWorkouts {
 		 if await hasValidRouteData(workout) {
 			// Only apply distance filter if shortRouteFilter is enabled
@@ -340,19 +340,19 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 			print("DP - Excluding workout \(workout.uuid) due to missing route data")
 		 }
 	  }
-	  
+
 	  await MainActor.run {
 		 self.filteredWorkoutCount = validWorkouts.count
 	  }
-	  
+
 	  print("\nDP - fetchPagedWorkouts summary:")
 	  print("- Total workouts found: \(self.totalWorkoutCount)")
 	  print("- Workouts with valid routes: \(self.filteredWorkoutCount)")
 	  print("- Filtered out: \(self.totalWorkoutCount - self.filteredWorkoutCount)")
-	  
+
 	  return validWorkouts
    }
-   
+
    /// Fetches route objects from HealthKit for a given workout.
    func getWorkoutRoute(workout: HKWorkout) async -> [HKWorkoutRoute]? {
 	  let byWorkout = HKQuery.predicateForObjects(from: workout)
@@ -380,7 +380,7 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 	  print("\nDP - getWorkoutRoute => \(workouts.count) route(s) for \(workout.uuid)")
 	  return workouts
    }
-   
+
    /// Fetches the CLLocation data from a single HKWorkoutRoute
    func getCLocationDataForRoute(routeToExtract: HKWorkoutRoute) async -> [CLLocation] {
 	  do {
@@ -408,33 +408,33 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 return []
 	  }
    }
-   
+
    private func getCachedCity(for uuid: UUID) -> String? {
 	  cacheQueue.sync { cityNameCache[uuid] }
    }
-   
+
    private func setCachedCity(_ city: String, for uuid: UUID) {
 	  cacheQueue.sync { cityNameCache[uuid] = city }
    }
-   
+
    /// Gets city name from cache or fallback geocoding
    func fetchCityName(for workout: HKWorkout) async -> String? {
 	  if let cachedCity = getCachedCity(for: workout.uuid) {
 		 return cachedCity
 	  }
-	  
+
 	  guard let routes = await getWorkoutRoute(workout: workout),
 			let route = routes.first else {
 		 setCachedCity("Unknown City", for: workout.uuid)
 		 return "Unknown City"
 	  }
-	  
+
 	  let locations = await getCLocationDataForRoute(routeToExtract: route)
 	  guard let firstLocation = locations.first else {
 		 setCachedCity("Unknown City", for: workout.uuid)
 		 return "Unknown City"
 	  }
-	  
+
 	  let geocoder = CLGeocoder()
 	  do {
 		 let placemarks = try await geocoder.reverseGeocodeLocation(firstLocation)
@@ -447,7 +447,7 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 return "Unknown City"
 	  }
    }
-   
+
    func fetchEnergyBurned(for workout: HKWorkout) -> Double? {
 	  // First check metadata
 	  if let metaEnergyStr = workout.metadata?[METADATA_KEY_ENERGY_BURNED] as? String,
@@ -455,13 +455,21 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 		 print("DP - Found energyBurned as String: \(energyValue)")
 		 return energyValue
 	  }
-	  
+
 	  // Then check workout's direct energy burned property
-	  if let energy = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) {
-		 print("DP - Found energyBurned from workout: \(energy)")
-		 return energy
+	  if #available(iOS 18.0, *) {
+		 if let statistics = workout.statistics(for: HKQuantityType(.activeEnergyBurned)),
+			let energy = statistics.sumQuantity()?.doubleValue(for: .kilocalorie()) {
+			print("DP - Found energyBurned from workout statistics: \(energy)")
+			return energy
+		 }
+	  } else {
+		 if let energy = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) {
+			print("DP - Found energyBurned from workout: \(energy)")
+			return energy
+		 }
 	  }
-	  
+
 	  print("DP - No energyBurned found for workout \(workout.uuid)")
 	  return nil
    }

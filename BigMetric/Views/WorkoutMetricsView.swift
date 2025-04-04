@@ -5,7 +5,7 @@ struct WorkoutMetricsView: View {
    var workout: WorkoutCore
    var metricMeta: MetricMeta
    @ObservedObject var polyViewModel: PolyViewModel
-   
+
    var body: some View {
 	  VStack(spacing: 12) {
 		 HStack(alignment: .top, spacing: 16) {
@@ -17,14 +17,14 @@ struct WorkoutMetricsView: View {
 				  .lineLimit(1)
 				  .minimumScaleFactor(0.8)
 				  .padding(.top, 8)
-			   
+
 			   HStack(spacing: 4) {
 				  Image(systemName: "clock")
 					 .font(.system(size: 14))
 				  Text(metricMeta.totalTime)
 					 .font(.system(size: 16))
 			   }
-			   
+
 			   // MARK: - Navigation Link to MetricsView
 			   NavigationLink(destination: MetricsView(workout: workout, metricMeta: metricMeta)) {
 				  HStack {
@@ -42,9 +42,9 @@ struct WorkoutMetricsView: View {
 			   }
 			   .padding(.top, 4)
 			}
-			
+
 			Spacer()
-			
+
 			// MARK: - Right Section (Date and Stats)
 			VStack(alignment: .trailing, spacing: 6) {
 			   // Date and Time Group
@@ -55,18 +55,18 @@ struct WorkoutMetricsView: View {
 					 .font(.caption)
 					 .opacity(0.9)
 			   }
-			   
+
 			   Divider()
 				  .frame(width: 40, height: 1)
 				  .background(Color.white.opacity(0.5))
 				  .padding(.vertical, 4)
-			   
+
 			   // Stats Group
 			   VStack(alignment: .trailing, spacing: 6) {
 				  // Distance with icon
 				  HStack(spacing: 6) {
 					 Image(systemName: "figure.run")
-					 
+
 					 Text("Distance:")
 						.font(.caption)
 					 Text("\(String(format: "%.2f", workout.distance)) mi")
@@ -77,12 +77,11 @@ struct WorkoutMetricsView: View {
 				  .lineLimit(1)
 				  .minimumScaleFactor(0.5)
 				  .scaledToFit()
-				  
+
 				  // Average Speed with icon
 				  if let speed = metricMeta.averageSpeed {
 					 HStack(spacing: 6) {
 						Image(systemName: "speedometer")
-						//						   .font(.system(size: 14))
 						Text("Avg Speed:")
 						   .font(.caption)
 						Text("\(String(format: "%.1f", speed)) mph")
@@ -93,7 +92,6 @@ struct WorkoutMetricsView: View {
 					 .lineLimit(1)
 					 .minimumScaleFactor(0.5)
 					 .scaledToFit()
-					 
 				  }
 			   }
 			}
@@ -102,18 +100,15 @@ struct WorkoutMetricsView: View {
 		 .padding(.vertical, 16)
 	  }
 	  .frame(height: 180)
-	  .background(WeatherGradient(from: metricMeta.weatherSymbol ?? "sun.max").gradient)
 	  .foregroundColor(.white)
-	  .cornerRadius(12)
-	  .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
    }
-   
+
    private var dateFormatter: DateFormatter {
 	  let formatter = DateFormatter()
 	  formatter.dateStyle = .long
 	  return formatter
    }
-   
+
    private var timeFormatter: DateFormatter {
 	  let formatter = DateFormatter()
 	  formatter.dateFormat = "h:mm a"

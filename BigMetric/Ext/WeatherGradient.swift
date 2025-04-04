@@ -36,6 +36,19 @@ enum WeatherGradient {
 	  }
    }
 
+   var backgroundImage: String {
+	  switch self {
+		 case .sunny: return "sunny"
+		 case .cloudy: return "cloudy"
+		 case .windy: return "windy"
+		 case .rainy: return "rain"
+		 case .snowy: return "snow"
+		 case .partlyCloudy: return "partlyCloudy"
+		 case .mix: return "snow"
+		 case .default: return "general"
+	  }
+   }
+
    private func makeGradient(startColor: Color, endColor: Color) -> LinearGradient {
 	  LinearGradient(
 		 gradient: Gradient(colors: [startColor, endColor]),

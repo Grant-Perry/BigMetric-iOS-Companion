@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		9B109A042D95F4EE009027E9 /* BigMetric Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9B109AB02D95FC5A009027E9 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B109AAF2D95FC5A009027E9 /* Orb */; };
+		9BB243D22D9F411F00DBAC7D /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9BB243D12D9F411F00DBAC7D /* Orb */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,6 +42,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9BB243DC2D9F42C000DBAC7D /* Exceptions for "BigMetric Watch App" folder in "BigMetric iOS" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = 9B1099F52D95F4ED009027E9 /* BigMetric iOS */;
+		};
 		9BEF1E312D9D8AF80023FA37 /* Exceptions for "BigMetric" folder in "BigMetric Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -51,6 +59,7 @@
 		9BEFBC642D96269F00AA591E /* Exceptions for "BigMetric Watch App" folder in "BigMetric Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Assets.xcassets,
 				"Preview Content/Preview Assets.xcassets",
 			);
 			target = 9B109A022D95F4EE009027E9 /* BigMetric Watch App */;
@@ -60,6 +69,7 @@
 			membershipExceptions = (
 				InfoiOS.plist,
 				InfoWatch.plist,
+				"Preview Content/Preview Assets.xcassets",
 			);
 			target = 9B1099F52D95F4ED009027E9 /* BigMetric iOS */;
 		};
@@ -78,6 +88,7 @@
 		9B109A072D95F4EE009027E9 /* BigMetric Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				9BB243DC2D9F42C000DBAC7D /* Exceptions for "BigMetric Watch App" folder in "BigMetric iOS" target */,
 				9BEFBC642D96269F00AA591E /* Exceptions for "BigMetric Watch App" folder in "BigMetric Watch App" target */,
 			);
 			path = "BigMetric Watch App";
@@ -97,6 +108,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9BB243D22D9F411F00DBAC7D /* Orb in Frameworks */,
 				9B109AB02D95FC5A009027E9 /* Orb in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -167,6 +179,7 @@
 			name = "BigMetric Watch App";
 			packageProductDependencies = (
 				9B109AAF2D95FC5A009027E9 /* Orb */,
+				9BB243D12D9F411F00DBAC7D /* Orb */,
 			);
 			productName = "BigMetric Watch App";
 			productReference = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */;
@@ -201,7 +214,7 @@
 			mainGroup = 9B1099ED2D95F4ED009027E9;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				9B109AAE2D95FC5A009027E9 /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
+				9BB243D02D9F411F00DBAC7D /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9B1099F72D95F4ED009027E9 /* Products */;
@@ -460,7 +473,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.59;
+				MARKETING_VERSION = 2.60;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -498,7 +511,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.59;
+				MARKETING_VERSION = 2.60;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -545,7 +558,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		9B109AAE2D95FC5A009027E9 /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
+		9BB243D02D9F411F00DBAC7D /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = BigMetric/Orb;
 		};
@@ -553,6 +566,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		9B109AAF2D95FC5A009027E9 /* Orb */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Orb;
+		};
+		9BB243D12D9F411F00DBAC7D /* Orb */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Orb;
 		};
