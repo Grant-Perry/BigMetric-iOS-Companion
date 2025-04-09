@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AppConstants {
-   static let appName = "BigPoly"
+   static let appName = "BigMetric"
    static let title = "My Workouts"
 
    static func getVersion() -> String {
