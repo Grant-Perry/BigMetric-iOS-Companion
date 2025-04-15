@@ -8,92 +8,92 @@ struct endWorkout: View {
    @State var unifiedWorkoutManager: UnifiedWorkoutManager
    @Binding var selectedTab: Int
 
-   var screenBounds = WKInterfaceDevice.current().screenBounds
-   @State var yardsOrMiles = false
-   @State var isStopping   = true
-   @State private var isRecording = true
-
-   @State var timeOut         = Color( #colorLiteral(red: 0.9764705896, green: 0.850980401, blue: 0.5490196347, alpha: 1))
-   @State var headerBGColor   = Color( #colorLiteral(red: 0.9372549057, green: 0.3490196168, blue: 0.1921568662, alpha: 1))
-   @State var headerBGColor2  = Color( #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1))
-   @State var isStoppingColor = Color( #colorLiteral(red: 1, green: 0.5409764051, blue: 0.8473142982, alpha: 1))
-
    var body: some View {
 	  ZStack {
-		 // Background
+		 // Background gradient matching summary
 		 LinearGradient(
 			gradient: Gradient(colors: [
-			   Color.blue.opacity(0.8),
-			   Color.purple.opacity(0.6)
+			   .purple.opacity(0.8),
+			   .blue.opacity(0.6),
+			   .purple.opacity(0.3)
 			]),
 			startPoint: .topLeading,
 			endPoint: .bottomTrailing
 		 )
 		 .ignoresSafeArea()
 
-		 // Main content
-		 VStack(spacing: 16) {
-			Image(systemName: "hand.raised.fill")
-			   .font(.system(size: 32))
-			   .foregroundColor(.white)
-			   .padding(.top, 8)
+		 ScrollView(.vertical) {
+			VStack(spacing: 20) {
+			   // End Workout Card
+			   VStack(spacing: 16) {
+				  // Icon and Title
+				  VStack(spacing: 4) {
+					 Image(systemName: "hand.raised.fill")
+						.font(.system(size: 32))
+						.foregroundStyle(.white)
+						.padding(.top, 8)
 
-			Text("End Workout?")
-			   .font(.system(size: 20, weight: .semibold))
-			   .foregroundColor(.white)
+					 Text("End Workout?")
+						.font(.system(size: 20, weight: .semibold))
+						.foregroundColor(.white)
 
-			Text("Your progress will be saved")
-			   .font(.system(size: 14))
-			   .foregroundColor(.white.opacity(0.8))
-			   .padding(.bottom, 8)
-
-			VStack(spacing: 12) {
-			   // Stop button with icon
-			   Button(action: {
-				  unifiedWorkoutManager.stopAndFinish()
-			   }) {
-				  HStack {
-					 Image(systemName: "stop.fill")
+					 Text("Your progress will be saved")
 						.font(.system(size: 14))
-					 Text("End Workout")
-						.font(.system(size: 16, weight: .medium))
+						.foregroundColor(.white.opacity(0.8))
 				  }
+				  .padding(.vertical, 8)
 				  .frame(maxWidth: .infinity)
-				  .padding(.vertical, 12)
-				  .background(
-					 Color.red.opacity(0.9)
-						.overlay(Material.thin)
-				  )
-				  .cornerRadius(20)
-			   }
+				  .background(Color.white.opacity(0.15))
+				  .cornerRadius(15)
 
-			   // Cancel button with icon
-			   Button(action: {
-				  selectedTab = 2
-			   }) {
-				  HStack {
-					 Image(systemName: "arrow.uturn.backward")
-						.font(.system(size: 14))
-					 Text("Continue")
-						.font(.system(size: 16, weight: .medium))
+				  // End Button
+				  Button(action: {
+					 unifiedWorkoutManager.stopAndFinish()
+				  }) {
+					 HStack {
+						Image(systemName: "stop.fill")
+						Text("End")
+					 }
+					 .font(.system(size: 20, weight: .semibold))
+					 .foregroundColor(.white)
+					 .frame(maxWidth: .infinity)
+					 .padding(.vertical, 12)
+					 .background(Color.red.opacity(0.3))
+					 .cornerRadius(15)
 				  }
-				  .frame(maxWidth: .infinity)
-				  .padding(.vertical, 12)
-				  .background(
-					 Color.gray.opacity(0.3)
-						.overlay(Material.ultraThin)
-				  )
-				  .cornerRadius(20)
+
+				  // Continue Button
+				  Button(action: {
+					 selectedTab = 2
+				  }) {
+					 HStack {
+						Image(systemName: "arrow.counterclockwise")
+						Text("Continue")
+					 }
+					 .font(.system(size: 20, weight: .semibold))
+					 .foregroundColor(.white)
+					 .frame(maxWidth: .infinity)
+					 .padding(.vertical, 12)
+					 .background(Color.white.opacity(0.15))
+					 .cornerRadius(15)
+				  }
 			   }
+			   .padding(.horizontal, 16)
+			   .padding(.vertical, 12)
+			   .background(
+				  RoundedRectangle(cornerRadius: 20)
+					 .fill(Color.black.opacity(0.2))
+			   )
+			   .padding(.horizontal)
 			}
-			.padding(.horizontal, 16)
+			.padding(.vertical)
 		 }
-		 .padding()
 
-		 // Overlay the progress if we're currently saving to HK
+		 // Saving overlay
 		 if unifiedWorkoutManager.isSavingToHealthKit {
 			Color.black.opacity(0.7)
 			   .edgesIgnoringSafeArea(.all)
+			   .transition(.opacity)
 
 			VStack(spacing: 12) {
 			   ProgressView()
@@ -107,7 +107,9 @@ struct endWorkout: View {
 			.padding(24)
 			.background(Color.black.opacity(0.6))
 			.cornerRadius(16)
+			.transition(.scale.combined(with: .opacity))
 		 }
 	  }
+	  .animation(.easeInOut, value: unifiedWorkoutManager.isSavingToHealthKit)
    }
 }

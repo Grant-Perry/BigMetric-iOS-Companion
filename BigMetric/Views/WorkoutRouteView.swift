@@ -3,78 +3,71 @@ import HealthKit
 
 struct WorkoutRouteView: View {
    let workout: HKWorkout
-   @StateObject private var viewModel: WorkoutRouteViewModel
-
+   @StateObject private var workoutRouteViewModel: WorkoutRouteViewModel
+   
    init(workout: HKWorkout, polyViewModel: PolyViewModel) {
 	  self.workout = workout
-	  self._viewModel = StateObject(wrappedValue: WorkoutRouteViewModel(workout: workout, polyViewModel: polyViewModel))
+	  self._workoutRouteViewModel = StateObject(wrappedValue: WorkoutRouteViewModel(workout: workout, polyViewModel: polyViewModel))
    }
-
-   private var dateFormatter: DateFormatter {
-	  let df = DateFormatter()
-	  df.dateStyle = .medium
-	  return df
-   }
-
-   private var timeFormatter: DateFormatter {
-	  let df = DateFormatter()
-	  df.timeStyle = .short
-	  return df
-   }
-
+   
    var body: some View {
 	  ScrollView {
 		 VStack(spacing: 4) {
-			if viewModel.isLoading {
+			if workoutRouteViewModel.isLoading {
 			   WorkoutLoadingView()
-			} else if viewModel.isError {
-			   WorkoutErrorView(message: viewModel.errorMessage)
-			} else {
+			} else if workoutRouteViewModel.isError {
+			   WorkoutErrorView(message: workoutRouteViewModel.errorMessage)
+			} else if workoutRouteViewModel.isDataLoaded {  
 			   VStack(spacing: 12) {
 				  WorkoutHeaderView(
-					 cityName: viewModel.cityName,
-					 address: viewModel.address,
-					 routeStartDate: viewModel.routeStartDate,
-					 weatherTemp: viewModel.weatherTemp,
-					 weatherSymbol: viewModel.weatherSymbol
+					 cityName: workoutRouteViewModel.cityName,
+					 address: workoutRouteViewModel.address,
+					 routeStartDate: workoutRouteViewModel.routeStartDate,
+					 weatherTemp: workoutRouteViewModel.weatherTemp,
+					 weatherSymbol: workoutRouteViewModel.weatherSymbol
 				  )
-
+				  
 				  WorkoutMetricsGridView(
-					 formattedTotalTime: viewModel.formattedTotalTime,
-					 distance: viewModel.distance,
-					 pace: viewModel.formatPaceMinMi(),
-					 weatherTemp: viewModel.weatherTemp,
-					 weatherSymbol: viewModel.weatherSymbol
+					 formattedTotalTime: workoutRouteViewModel.formattedTotalTime,
+					 distance: workoutRouteViewModel.distance,
+					 pace: workoutRouteViewModel.formatPaceMinMi(),
+					 weatherTemp: workoutRouteViewModel.weatherTemp,
+					 weatherSymbol: workoutRouteViewModel.weatherSymbol
 				  )
 				  .padding(.horizontal, 16)
 				  .padding(.bottom, 8)
 			   }
 			   .background(
-				  Group {
-					 Image(viewModel.weatherSymbol != nil ?
-						   WeatherGradient(from: viewModel.weatherSymbol).backgroundImage :
-							  WeatherGradient.default.backgroundImage)
-					 .resizable()
-					 .aspectRatio(contentMode: .fill)
-					 .opacity(0.95)
-					 Color.black.opacity(0.15)
+				  GeometryReader { geometry in
+					 ZStack {
+						if let symbol = workoutRouteViewModel.weatherSymbol {
+						   Image(WeatherGradient(from: symbol).backgroundImage)
+							  .resizable()
+							  .aspectRatio(contentMode: .fill)
+							  .frame(width: geometry.size.width, height: geometry.size.height)
+							  .opacity(0.95)
+						} else {
+						   Image(WeatherGradient.default.backgroundImage)
+							  .resizable()
+							  .aspectRatio(contentMode: .fill)
+							  .frame(width: geometry.size.width, height: geometry.size.height)
+							  .opacity(0.95)
+						}
+						Color.black.opacity(0.15)
+					 }
 				  }
 			   )
 			   .clipShape(RoundedRectangle(cornerRadius: 16))
 			   .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
 			   .padding(.horizontal, 12)
-			   .opacity(viewModel.appeared ? 1 : 0)
-			   .offset(y: viewModel.appeared ? 0 : 50)
-			   .animation(.spring(response: 0.6, dampingFraction: 0.8), value: viewModel.appeared)
-			   .onAppear { viewModel.appeared = true }
+			   .opacity(workoutRouteViewModel.appeared ? 1 : 0)
+			   .offset(y: workoutRouteViewModel.appeared ? 0 : 50)
+			   .animation(.spring(response: 0.6, dampingFraction: 0.8), value: workoutRouteViewModel.appeared)
+			   .onAppear { workoutRouteViewModel.appeared = true }
 			}
 		 }
 		 .padding(.vertical, 2)
 	  }
 	  .scrollTargetBehavior(.viewAligned)
-	  .task {
-		 await viewModel.loadWorkoutData()
-	  }
    }
 }
-

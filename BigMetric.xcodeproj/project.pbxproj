@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		9B109A042D95F4EE009027E9 /* BigMetric Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		9B46E6852DA05CC2001AA5BD /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B46E6842DA05CC2001AA5BD /* Orb */; };
-		9B777EF92DA6B8BF00C629BC /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B109AAF2D95FC5A009027E9 /* Orb */; };
-		9B777EFA2DA6B8BF00C629BC /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9BB243D12D9F411F00DBAC7D /* Orb */; };
-		9B777EFB2DA6B8BF00C629BC /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B72CDD12D9F6F1400AFECE0 /* Orb */; };
-		9B777EFC2DA6B8BF00C629BC /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B72CDD42D9F6F4400AFECE0 /* Orb */; };
+		9B9D6FC92DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B109AAF2D95FC5A009027E9 /* Orb */; };
+		9B9D6FCA2DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9BB243D12D9F411F00DBAC7D /* Orb */; };
+		9B9D6FCB2DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B72CDD12D9F6F1400AFECE0 /* Orb */; };
+		9B9D6FCC2DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B46E6842DA05CC2001AA5BD /* Orb */; };
+		9BD961072DA8A35400EAB8EE /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B72CDD42D9F6F4400AFECE0 /* Orb */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -102,11 +102,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9B777EFC2DA6B8BF00C629BC /* Orb in Frameworks */,
-				9B777EFB2DA6B8BF00C629BC /* Orb in Frameworks */,
-				9B777EFA2DA6B8BF00C629BC /* Orb in Frameworks */,
-				9B777EF92DA6B8BF00C629BC /* Orb in Frameworks */,
-				9B46E6852DA05CC2001AA5BD /* Orb in Frameworks */,
+				9B9D6FCC2DAD9BA6004FBB10 /* Orb in Frameworks */,
+				9B9D6FCB2DAD9BA6004FBB10 /* Orb in Frameworks */,
+				9B9D6FCA2DAD9BA6004FBB10 /* Orb in Frameworks */,
+				9B9D6FC92DAD9BA6004FBB10 /* Orb in Frameworks */,
+				9BD961072DA8A35400EAB8EE /* Orb in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,7 +214,7 @@
 			mainGroup = 9B1099ED2D95F4ED009027E9;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				9B46E6832DA05CC2001AA5BD /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
+				9B7780E32DA6C58400C629BC /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9B1099F72D95F4ED009027E9 /* Products */;
@@ -405,7 +405,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.60;
+				MARKETING_VERSION = 2.63;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -436,7 +436,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.60;
+				MARKETING_VERSION = 2.63;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -558,7 +558,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		9B46E6832DA05CC2001AA5BD /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
+		9B7780E32DA6C58400C629BC /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = BigMetric/Orb;
 		};

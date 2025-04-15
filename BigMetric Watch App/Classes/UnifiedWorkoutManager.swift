@@ -255,20 +255,20 @@ class UnifiedWorkoutManager: NSObject,
    /// This method now sets a flag to indicate that the workout should be finished once the session
    /// has fully ended. It then calls endCurrentWorkout() to end the session.
    func stopAndFinish() {
-	  // Indicate we are now writing out the data
+	  // Stop activity monitoring immediately
+	  activityManager.stopActivityUpdates()
+	  userDeclinedCurrentActivity = false
+	  isWalkingTriggerOn = false
+
 	  isSavingToHealthKit = true
-
-	  // Set flag so that once the session ends, we finish the workout.
 	  shouldFinishWorkoutAfterSessionEnd = true
-
-	  // End the current workout session
 	  endCurrentWorkout()
 
-	  // FIXED: Add safety timeout in case the session delegate doesn't fire properly
+	  // Clear any buffered locations immediately
+	  clearBufferedLocations()
+
 	  DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
 		 guard let self = self else { return }
-
-		 // If still waiting after 5 seconds, force completion
 		 if self.isSavingToHealthKit && self.shouldFinishWorkoutAfterSessionEnd {
 			print("[UWM] Safety timeout reached - forcing workout completion")
 			self.finishWorkoutAndRoute()
@@ -411,7 +411,12 @@ class UnifiedWorkoutManager: NSObject,
 
    /// Resets all data for a new workout session.
    func resetForNewWorkout() {
-	  LMDelegate.stopUpdatingLocation()
+	  // Add safety check to stop activity monitoring first
+	  stopAllLocationUpdates()
+	  activityManager.stopActivityUpdates()
+	  userDeclinedCurrentActivity = false
+	  isWalkingTriggerOn = false
+
 	  timer?.invalidate()
 	  timer = nil
 
@@ -449,21 +454,19 @@ class UnifiedWorkoutManager: NSObject,
 	  weatherSymbol = ""
 	  energyBurned = 0
 
-	  // Ensure each fresh workout starts with this off.
 	  isSavingToHealthKit = false
 
-	  LMDelegate.stopUpdatingLocation()
+	  // Clear any buffered locations and timers
+	  clearBufferedLocations()
+	  bufferingTimer?.invalidate()
+	  promptDismissTimer?.invalidate()
+
+	  // Reset location manager properties
 	  LMDelegate.desiredAccuracy = kCLLocationAccuracyThreeKilometers
 	  LMDelegate.desiredAccuracy = isPrecise ? kCLLocationAccuracyBest : kCLLocationAccuracyNearestTenMeters
-
 	  GPSAccuracy = 99.0
 
-	  locationsArray.removeAll()
-	  altitudes.removeAll()
-	  lastLocation = nil
-	  firstLocation = nil
-
-	  print("resetForNewWorkout => data cleared, fresh session.")
+	  print("resetForNewWorkout => data cleared, fresh session, location updates stopped.")
    }
 
    // MARK: - Pedometer
@@ -514,6 +517,11 @@ class UnifiedWorkoutManager: NSObject,
    /// Additionally, during the first 10 seconds of the workout, any update that is more than 750 meters
    /// away from the accepted initial location is ignored.
    public func locationManager(_ manager: CLLocationManager, didUpdateLocations newLocs: [CLLocation]) {
+	  // ADD: Guard against updates when workout is not active
+	  guard workoutState == .running, weIsRecording else {
+		 return
+	  }
+
 	  // [Original location logic here...]
 
 	  // Explicit mile trigger logic
@@ -896,6 +904,13 @@ class UnifiedWorkoutManager: NSObject,
 		 startMonitoringActivity()
 		 print("[UWM] ✅ Walking trigger explicitly turned ON.")
 	  }
+   }
+
+   // MARK: - Helper method to completely stop location updates
+   private func stopAllLocationUpdates() {
+	  LMDelegate.delegate = nil  // Remove self as delegate
+	  LMDelegate.stopUpdatingLocation()
+	  LMDelegate.stopUpdatingHeading()
    }
 
    // MARK: End of Class
