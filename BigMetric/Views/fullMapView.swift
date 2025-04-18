@@ -112,17 +112,19 @@ struct FullMapView: View {
 			energyBurned = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie())
 		 }
 
-		 metricMeta = MetricMeta(
+		 var metricMeta = MetricMeta(
 			weatherTemp: weatherTemp,
 			weatherSymbol: weatherSymbol,
 			cityName: cityName,
 			totalTime: totalTime,
-			startDate: workout.startDate,
-			averageSpeed: averageSpeed,
-			stepCount: stepCount,
-			energyBurned: energyBurned
+			startDate: workout.startDate
 		 )
 
+		 metricMeta.averageSpeed = averageSpeed
+		 metricMeta.stepCount = stepCount
+		 metricMeta.energyBurned = energyBurned
+
+		 self.metricMeta = metricMeta
 		 isLoading = false
 	  } catch {
 		 isError = true

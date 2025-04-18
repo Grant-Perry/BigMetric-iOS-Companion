@@ -54,6 +54,69 @@ public struct MetricsView: View {
 	  return metricMeta.startDate.addingTimeInterval(TimeInterval(secondsToAdd))
    }
 
+   private var formattedHeartRate: String {
+	  if let heartRate = metricMeta.averageHeartRate {
+		 return String(format: "%.0f bpm", heartRate)
+	  }
+	  return "-- bpm"
+   }
+
+   private var formattedElevationGain: String {
+	  if let elevation = metricMeta.elevationGain {
+		 return String(format: "%.0f ft", elevation)
+	  }
+	  return "-- ft"
+   }
+
+   private var formattedAverageSpeed: String {
+	  if let speed = metricMeta.averageSpeed {
+		 return String(format: "%.1f mph", speed)
+	  }
+	  return "-- mph"
+   }
+
+   private var formattedCadence: String {
+	  if let cadence = metricMeta.cadence {
+		 return String(format: "%.0f spm", cadence)
+	  }
+	  return "-- spm"
+   }
+
+   private var formattedGroundContact: String {
+	  if let groundContact = metricMeta.groundContactTime {
+		 return String(format: "%.0f ms", groundContact)
+	  }
+	  return "-- ms"
+   }
+
+   private var formattedVerticalOscillation: String {
+	  if let oscillation = metricMeta.verticalOscillation {
+		 return String(format: "%.1f cm", oscillation)
+	  }
+	  return "-- cm"
+   }
+
+   private var formattedStrideLength: String {
+	  if let strideLength = metricMeta.strideLength {
+		 return String(format: "%.2f m", strideLength)
+	  }
+	  return "-- m"
+   }
+
+   private var formattedHeartRateRange: String {
+	  if let min = metricMeta.minHeartRate, let max = metricMeta.maxHeartRate {
+		 return String(format: "%.0f-%.0f bpm", min, max)
+	  }
+	  return "-- bpm"
+   }
+
+   private var formattedElevationChange: String {
+	  if let gain = metricMeta.elevationGain, let loss = metricMeta.elevationLoss {
+		 return String(format: "+%.0f/-%.0f ft", gain, loss)
+	  }
+	  return "-- ft"
+   }
+
    public init(workout: WorkoutCore, metricMeta: MetricMeta) {
 	  self.workout = workout
 	  self.metricMeta = metricMeta
@@ -74,42 +137,42 @@ public struct MetricsView: View {
 		 )
 		 .ignoresSafeArea()
 
-		 ScrollView(.vertical) {
+		 ScrollView {
 			VStack(spacing: 20) {
-			   // MOVE: Weather info to top
-			   if let weatherSymbol = metricMeta.weatherSymbol {
-				  VStack(alignment: .leading, spacing: 12) {
-					 Text("Weather Summary")
-						.font(.system(size: 20, weight: .semibold))
-						.foregroundColor(.white)
+			   // Weather Summary Section with Weather Background
+			   VStack {
+				  Text("Weather Summary")
+					 .font(.title2)
+					 .fontWeight(.bold)
+					 .foregroundColor(.white)
 
-					 HStack(spacing: 15) {
-						VStack(alignment: .leading) {
-						   if let temp = metricMeta.weatherTemp {
-							  Text("\(temp)°F")
-								 .font(.system(size: 24, weight: .bold))
-								 .foregroundColor(.white)
-						   }
-
-						   Text(metricMeta.cityName)
-							  .font(.system(size: 16))
-							  .foregroundColor(.white.opacity(0.8))
-						}
-
-						Spacer()
-
-						Image(systemName: weatherSymbol)
-						   .font(.system(size: 32))
-						   .foregroundColor(.white)
-					 }
+				  HStack {
+					 Text("\(metricMeta.weatherTemp ?? "N/A")°F")
+						.font(.system(size: 48, weight: .bold))
+					 Spacer()
+					 Image(systemName: metricMeta.weatherSymbol ?? "sun.max.fill")
+						.font(.system(size: 40))
 				  }
-				  .padding()
-				  .background(
-					 WeatherGradient(from: weatherSymbol).gradient
-				  )
-				  .cornerRadius(15)
-				  .padding(.horizontal)
+				  .foregroundColor(.white)
+
+				  Text(metricMeta.cityName)
+					 .font(.title3)
+					 .foregroundColor(.white)
 			   }
+			   .padding()
+			   .background(
+				  ZStack {
+					 Image(metricMeta.weatherSymbol != nil ?
+						   WeatherGradient(from: metricMeta.weatherSymbol).backgroundImage :
+							  WeatherGradient.default.backgroundImage)
+					 .resizable()
+					 .aspectRatio(contentMode: .fill)
+					 .opacity(0.95)
+					 Color.black.opacity(0.15)
+				  }
+			   )
+			   .clipShape(RoundedRectangle(cornerRadius: 15))
+			   .padding(.horizontal)
 
 			   // CHANGE: Use LazyVGrid for metrics
 			   let columns = [
@@ -118,77 +181,144 @@ public struct MetricsView: View {
 			   ]
 
 			   LazyVGrid(columns: columns, spacing: 16) {
-				  // 1. Start Time
-				  MetricBox(
-					 title: "Start",
-					 value: metricMeta.startDate.formatted(date: .abbreviated, time: .shortened),
-					 textSize: textSizeBig,
-					 iconName: "clock.arrow.circlepath"
-				  )
-
-				  // 2. End Time
-				  MetricBox(
-					 title: "End",
-					 value: endTime.formatted(date: .abbreviated, time: .shortened),
-					 textSize: textSizeBig,
-					 iconName: "clock.arrow.2.circlepath"
-				  )
-
-				  // 3. Distance
-				  MetricBox(
-					 title: "Distance",
-					 value: String(format: "%.2f", workout.distance),
-					 textSize: textSizeBig,
-					 iconName: "ruler"
-				  )
-
-				  // 4. Total Time
-				  MetricBox(
-					 title: "Total Time",
-					 value: metricMeta.totalTime,
-					 textSize: textSizeBig,
-					 iconName: "stopwatch"
-				  )
-
-				  // 5. Average Pace
-				  MetricBox(
-					 title: "Avg Pace",
-					 value: averagePace,
-					 textSize: textSizeBig,
-					 iconName: "speedometer"
-				  )
-
-				  // 6. Average Speed
-				  if let avgSpeed = metricMeta.averageSpeed {
+				  // Core Metrics Section
+				  Group {
 					 MetricBox(
-						title: "Avg Speed",
-						value: String(format: "%.1f", avgSpeed),
+						title: "Start",
+						value: metricMeta.startDate.formatted(date: .abbreviated, time: .shortened),
 						textSize: textSizeBig,
-						iconName: "gauge.medium"
+						iconName: "clock.arrow.circlepath"
+					 )
+
+					 MetricBox(
+						title: "End",
+						value: endTime.formatted(date: .abbreviated, time: .shortened),
+						textSize: textSizeBig,
+						iconName: "clock.arrow.2.circlepath"
+					 )
+
+					 MetricBox(
+						title: "Distance",
+						value: String(format: "%.2f", workout.distance),
+						textSize: textSizeBig,
+						iconName: "ruler"
+					 )
+
+					 MetricBox(
+						title: "Duration",
+						value: metricMeta.totalTime,
+						textSize: textSizeBig,
+						iconName: "stopwatch"
 					 )
 				  }
 
-				  // 7. Steps
-				  if let steps = metricMeta.stepCount {
+				  // Pace & Speed Section
+				  Group {
 					 MetricBox(
-						title: "Steps",
-						value: {
-						   let formatter = NumberFormatter()
-						   formatter.numberStyle = .decimal
-						   return formatter.string(from: NSNumber(value: steps)) ?? "\(steps)"
-						}(),
+						title: "Avg Pace",
+						value: averagePace,
 						textSize: textSizeBig,
-						iconName: "figure.walk"
+						iconName: "speedometer"
+					 )
+
+					 if let speed = metricMeta.averageSpeed {
+						MetricBox(
+						   title: "Avg Speed",
+						   value: String(format: "%.1f mph", speed),
+						   textSize: textSizeBig,
+						   iconName: "gauge.medium"
+						)
+					 }
+				  }
+
+				  // Heart Rate Section
+				  Group {
+					 MetricBox(
+						title: "Heart Rate",
+						value: formattedHeartRate,
+						textSize: textSizeBig,
+						iconName: "heart.fill"
+					 )
+
+					 MetricBox(
+						title: "HR Range",
+						value: formattedHeartRateRange,
+						textSize: textSizeBig,
+						iconName: "waveform.path.ecg"
 					 )
 				  }
 
-				  // Energy burned section
-				  if let energyBurned = metricMeta.energyBurned, energyBurned > 0 {
+				  // Energy & Steps Section
+				  Group {
+					 if let steps = metricMeta.stepCount {
+						MetricBox(
+						   title: "Steps",
+						   value: String(format: "%d", steps),
+						   textSize: textSizeBig,
+						   iconName: "figure.walk"
+						)
+					 }
+
+					 if let energy = metricMeta.energyBurned {
+						MetricBox(
+						   title: "Energy",
+						   value: String(format: "%.0f cal", energy),
+						   textSize: textSizeBig,
+						   iconName: "flame.fill"
+						)
+					 }
+				  }
+
+				  // Running Dynamics Section
+				  Group {
 					 MetricBox(
-						title: "Energy",
-						value: String(format: "%.0f cal", energyBurned),
+						title: "Cadence",
+						value: formattedCadence,
 						textSize: textSizeBig,
-						iconName: "flame.fill"
+						iconName: "figure.walk.motion"
+					 )
+
+					 MetricBox(
+						title: "Ground Contact",
+						value: formattedGroundContact,
+						textSize: textSizeBig,
+						iconName: "figure.walk.arrival"
+					 )
+				  }
+
+				  // Elevation Section
+				  Group {
+					 MetricBox(
+						title: "Elevation",
+						value: formattedElevationChange,
+						textSize: textSizeBig,
+						iconName: "mountain.2.fill"
+					 )
+
+					 if let currentElevation = metricMeta.currentElevation {
+						MetricBox(
+						   title: "Current Alt",
+						   value: String(format: "%.0f ft", currentElevation),
+						   textSize: textSizeBig,
+						   iconName: "arrow.up.right.circle"
+						)
+					 }
+				  }
+
+				  // Advanced Running Metrics
+				  Group {
+					 MetricBox(
+						title: "Stride Length",
+						value: formattedStrideLength,
+						textSize: textSizeBig,
+						iconName: "figure.walk.circle"
+					 )
+
+					 MetricBox(
+						title: "Vertical OSC",
+						value: formattedVerticalOscillation,
+						textSize: textSizeBig,
+						iconName: "arrow.up.and.down"
 					 )
 				  }
 			   }
@@ -201,8 +331,6 @@ public struct MetricsView: View {
 	  .navigationBarTitleDisplayMode(.inline)
    }
 }
-
-
 
 private extension Color {
    static let systemBackground = Color(UIColor.systemBackground)
