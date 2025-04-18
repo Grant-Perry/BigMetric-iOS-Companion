@@ -517,27 +517,48 @@ class UnifiedWorkoutManager: NSObject,
    /// Additionally, during the first 10 seconds of the workout, any update that is more than 750 meters
    /// away from the accepted initial location is ignored.
    public func locationManager(_ manager: CLLocationManager, didUpdateLocations newLocs: [CLLocation]) {
-	  // ADD: Guard against updates when workout is not active
+	  // Keep existing guards
 	  guard workoutState == .running, weIsRecording else {
 		 return
 	  }
 
-	  // [Original location logic here...]
+	  // Check for driving speed
+	  if let latestLocation = newLocs.last {
+		 // Convert speed from m/s to mph
+		 let speedInMph = (latestLocation.speed * 2.23694)
 
-	  // Explicit mile trigger logic
-	  let prevMiles = Int(distance)
-	  locationsArray.append(contentsOf: newLocs)
-	  distance = locationsArray.calculatedDistance / metersToMiles
-	  let currentMiles = Int(distance)
+		 if speedInMph > maxSpeedMph {
+			consecutiveHighSpeedPoints += 1
 
-	  if currentMiles > prevMiles {
-		 lastHapticMile = currentMiles
-		 WKInterfaceDevice.current().play(.notification)
-		 print("[UWM] Mile alert immediately triggered at exact mile: \(currentMiles)")
+			if consecutiveHighSpeedPoints >= maxHighSpeedConsecutive && !isShowingDrivingAlert {
+			   isShowingDrivingAlert = true
+			   session?.pause()
+			   shouldInsertRouteData = false
+			   presentDrivingAlert()
+			   return
+			}
+		 } else {
+			consecutiveHighSpeedPoints = 0
+		 }
 	  }
 
-	  if let lastLocation = newLocs.last {
-		 NotificationCenter.default.post(name: .didUpdateLocation, object: lastLocation)
+	  // Proceed with normal location updates if not driving
+	  if shouldInsertRouteData {
+		 // Keep existing mile trigger logic
+		 let prevMiles = Int(distance)
+		 locationsArray.append(contentsOf: newLocs)
+		 distance = locationsArray.calculatedDistance / metersToMiles
+		 let currentMiles = Int(distance)
+
+		 if currentMiles > prevMiles {
+			lastHapticMile = currentMiles
+			WKInterfaceDevice.current().play(.notification)
+			print("[UWM] Mile alert immediately triggered at exact mile: \(currentMiles)")
+		 }
+
+		 if let lastLocation = newLocs.last {
+			NotificationCenter.default.post(name: .didUpdateLocation, object: lastLocation)
+		 }
 	  }
    }
 

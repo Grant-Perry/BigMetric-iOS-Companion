@@ -3,7 +3,7 @@ import CoreLocation
 
 struct CompassView: View {
    @State var screenBounds = WKInterfaceDevice.current().screenBounds
-   @ObservedObject var unifiedWorkoutManager: UnifiedWorkoutManager
+   @StateObject private var compassManager = CompassLMManager()
    @State private var rotateBGMode: Bool = false
    @State private var bgRotation: Double = 0
    @State private var arrowRotation: Double = 0
@@ -14,7 +14,7 @@ struct CompassView: View {
 			.resizable()
 			.scaledToFit()
 			.frame(width: screenBounds.width * 0.9, height: screenBounds.width * 0.9)
-			.rotationEffect(.degrees(rotateBGMode ? -unifiedWorkoutManager.course : 0))
+			.rotationEffect(.degrees(rotateBGMode ? -compassManager.course : 0))
 			.animation(.spring(response: 0.5), value: rotateBGMode)
 
 		 Circle()
@@ -25,19 +25,19 @@ struct CompassView: View {
 			.trim(from: 0.125, to: 0.375)
 			.stroke(Color.green.opacity(0.7), lineWidth: 6)
 			.frame(width: screenBounds.width * 0.95, height: screenBounds.width * 0.95)
-			.rotationEffect(.degrees(unifiedWorkoutManager.course - 180))
+			.rotationEffect(.degrees(compassManager.course - 180))
 
 		 Image("greenArrow")
 			.resizable()
 			.scaledToFit()
 			.frame(width: 50, height: 110)
 			.foregroundColor(.green)
-			.rotationEffect(.degrees(rotateBGMode ? 0 : unifiedWorkoutManager.course))
+			.rotationEffect(.degrees(rotateBGMode ? 0 : compassManager.course))
 			.opacity(0.95)
 			.scaleEffect(1.2)
 			.animation(.spring(response: 0.5), value: rotateBGMode)
 
-		 Text(unifiedWorkoutManager.heading)
+		 Text(compassManager.heading)
 			.font(.title3)
 			.foregroundColor(.white)
 			.bold()
@@ -48,7 +48,7 @@ struct CompassView: View {
 		 VStack {
 			Spacer()
 			HStack {
-			   Text("\(Int(unifiedWorkoutManager.course))°")
+			   Text("\(Int(compassManager.course))°")
 				  .font(.system(size: 25))
 				  .offset(y: 26)
 				  .foregroundColor(.gpMinty)
@@ -63,28 +63,16 @@ struct CompassView: View {
 		 }
 	  }
 	  .onAppear {
-		 unifiedWorkoutManager.LMDelegate.delegate = unifiedWorkoutManager
-		 unifiedWorkoutManager.LMDelegate.desiredAccuracy = kCLLocationAccuracyBest
-		 unifiedWorkoutManager.LMDelegate.headingFilter = 5
-		 unifiedWorkoutManager.LMDelegate.headingOrientation = .portrait
-		 unifiedWorkoutManager.LMDelegate.startUpdatingLocation()
-		 unifiedWorkoutManager.LMDelegate.startUpdatingHeading()
+		 compassManager.startUpdates()
 	  }
 	  .onDisappear {
-		 unifiedWorkoutManager.LMDelegate.stopUpdatingHeading()
-		 unifiedWorkoutManager.LMDelegate.stopUpdatingLocation()
+		 compassManager.stopUpdates()
 	  }
    }
 }
 
 #Preview {
-   let mockWorkoutManager = UnifiedWorkoutManager()
-   mockWorkoutManager.course = 45.0
-   mockWorkoutManager.heading = "NE"
-
-   return CompassView(
-	  unifiedWorkoutManager: mockWorkoutManager
-   )
-   .frame(width: WKInterfaceDevice.current().screenBounds.width)
-   .background(Color.black)
+   CompassView()
+	  .frame(width: WKInterfaceDevice.current().screenBounds.width)
+	  .background(Color.black)
 }
