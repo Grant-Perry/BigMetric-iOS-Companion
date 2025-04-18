@@ -3,7 +3,11 @@ import MapKit
 
 struct GradientMapView: UIViewRepresentable {
    var coordinates: [CLLocationCoordinate2D]
-   @Binding var mapType: MKMapType // Add a binding for map type selection
+   @Binding var mapType: MKMapType
+
+   func makeCoordinator() -> Coordinator {
+	  Coordinator(self)
+   }
 
    func makeUIView(context: Context) -> MKMapView {
 	  let mapView = MKMapView()
@@ -11,13 +15,11 @@ struct GradientMapView: UIViewRepresentable {
 	  mapView.isZoomEnabled = true
 	  mapView.isScrollEnabled = true
 	  mapView.isRotateEnabled = true
-	  mapView.mapType = mapType // Use the selected map type
+	  mapView.mapType = mapType
 
-	  // Add polyline
 	  let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
 	  mapView.addOverlay(polyline)
 
-	  // Add start and end annotations
 	  if let start = coordinates.first {
 		 let startAnnotation = MKPointAnnotation()
 		 startAnnotation.coordinate = start
@@ -32,43 +34,29 @@ struct GradientMapView: UIViewRepresentable {
 		 mapView.addAnnotation(endAnnotation)
 	  }
 
-	  // Calculate the bounding box for all coordinates
-	  var minLat = coordinates.map { $0.latitude }.min() ?? 0
-	  var maxLat = coordinates.map { $0.latitude }.max() ?? 0
-	  var minLon = coordinates.map { $0.longitude }.min() ?? 0
-	  var maxLon = coordinates.map { $0.longitude }.max() ?? 0
+	  // Set region
+	  let minLat = coordinates.map { $0.latitude }.min() ?? 0
+	  let maxLat = coordinates.map { $0.latitude }.max() ?? 0
+	  let minLon = coordinates.map { $0.longitude }.min() ?? 0
+	  let maxLon = coordinates.map { $0.longitude }.max() ?? 0
 
-	  // Add padding to the bounding box (20%)
-	  let latPadding = (maxLat - minLat) * 0.2
-	  let lonPadding = (maxLon - minLon) * 0.2
-	  minLat -= latPadding
-	  maxLat += latPadding
-	  minLon -= lonPadding
-	  maxLon += lonPadding
-
-	  // Create region that encompasses all points
 	  let center = CLLocationCoordinate2D(
 		 latitude: (minLat + maxLat) / 2,
 		 longitude: (minLon + maxLon) / 2
 	  )
 	  let span = MKCoordinateSpan(
-		 latitudeDelta: maxLat - minLat,
-		 longitudeDelta: maxLon - minLon
+		 latitudeDelta: (maxLat - minLat) * 1.4,
+		 longitudeDelta: (maxLon - minLon) * 1.4
 	  )
-	  let region = MKCoordinateRegion(center: center, span: span)
-
-	  // Set the region with animation disabled
-	  mapView.setRegion(region, animated: false)
+	  mapView.setRegion(MKCoordinateRegion(center: center, span: span), animated: false)
 
 	  return mapView
    }
 
-   func updateUIView(_ uiView: MKMapView, context: Context) {
-	  uiView.mapType = mapType // Dynamically update the map type
-   }
-
-   func makeCoordinator() -> Coordinator {
-	  Coordinator(self)
+   func updateUIView(_ mapView: MKMapView, context: Context) {
+	  if mapView.mapType != mapType {
+		 mapView.mapType = mapType
+	  }
    }
 
    class Coordinator: NSObject, MKMapViewDelegate {

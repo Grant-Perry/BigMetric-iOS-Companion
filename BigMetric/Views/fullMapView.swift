@@ -13,16 +13,10 @@ struct FullMapView: View {
    @State private var errorMessage: String = ""
    @State private var isLoading: Bool = false
    @State private var mapType: MKMapType = .standard
+   @State private var viewID = UUID()
 
    var body: some View {
 	  VStack {
-		 Picker("Map Type", selection: $mapType) {
-			Text("Standard").tag(MKMapType.standard)
-			Text("Satellite").tag(MKMapType.satellite)
-		 }
-		 .pickerStyle(SegmentedPickerStyle())
-		 .padding()
-
 		 if isLoading {
 			ProgressView()
 			   .frame(maxWidth: .infinity, alignment: .center)
@@ -34,6 +28,7 @@ struct FullMapView: View {
 		 } else {
 			if !routeCoordinates.isEmpty {
 			   GradientMapView(coordinates: routeCoordinates, mapType: $mapType)
+				  .id(viewID)
 			} else {
 			   Text("No route data available.")
 				  .foregroundColor(.gray)
@@ -42,13 +37,11 @@ struct FullMapView: View {
 	  }
 	  .safeAreaInset(edge: .top) {
 		 if let metricMeta = metricMeta, let workoutCore = convertedWorkout {
-			VStack {
-			   WorkoutMetricsView(
-				  workout: workoutCore,
-				  metricMeta: metricMeta,
-				  polyViewModel: polyViewModel
-			   )
-			}
+			WorkoutMetricsView(
+			   workout: workoutCore,
+			   metricMeta: metricMeta,
+			   polyViewModel: polyViewModel
+			)
 			.background(
 			   ZStack {
 				  Image(metricMeta.weatherSymbol != nil ?
@@ -67,6 +60,15 @@ struct FullMapView: View {
 	  }
 	  .navigationTitle("Workout Map")
 	  .navigationBarTitleDisplayMode(.inline)
+	  .toolbar {
+		 ToolbarItem(placement: .navigationBarTrailing) {
+			Picker("Map Type", selection: $mapType) {
+			   Text("Standard").tag(MKMapType.standard)
+			   Text("Satellite").tag(MKMapType.satellite)
+			}
+			.pickerStyle(SegmentedPickerStyle())
+		 }
+	  }
 	  .task {
 		 await loadWorkoutData()
 	  }
@@ -144,5 +146,11 @@ struct FullMapView: View {
 	  } else {
 		 return String(format: "%02d:%02d", minutes, seconds)
 	  }
+   }
+}
+
+extension View {
+   func bold(_ condition: Bool) -> some View {
+	  self.fontWeight(condition ? .bold : .regular)
    }
 }
