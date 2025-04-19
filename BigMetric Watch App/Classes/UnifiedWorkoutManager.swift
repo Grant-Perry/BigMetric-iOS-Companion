@@ -14,7 +14,8 @@ class UnifiedWorkoutManager: NSObject,
 							 CLLocationManagerDelegate,
 							 HKWorkoutSessionDelegate,
 							 HKLiveWorkoutBuilderDelegate,
-							 ObservableObject {
+							 ObservableObject,
+							 @unchecked Sendable {
 
    // MARK: - Public Properties
 

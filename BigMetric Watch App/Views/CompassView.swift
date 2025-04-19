@@ -62,6 +62,7 @@ struct CompassView: View {
 			rotateBGMode.toggle()
 		 }
 	  }
+	  // start and stop the delegate to save battery and only utilize when showing compass
 	  .onAppear {
 		 compassManager.startUpdates()
 	  }

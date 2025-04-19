@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		9B109A042D95F4EE009027E9 /* BigMetric Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9B2A01542DB2A8360064CD9C /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B2A01532DB2A8360064CD9C /* Orb */; };
+		9B2A01562DB3F20A0064CD9C /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 9B2A01552DB3F1F30064CD9C /* .gitignore */; };
 		9B9D6FC92DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B109AAF2D95FC5A009027E9 /* Orb */; };
 		9B9D6FCA2DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9BB243D12D9F411F00DBAC7D /* Orb */; };
 		9B9D6FCB2DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B72CDD12D9F6F1400AFECE0 /* Orb */; };
@@ -44,6 +46,7 @@
 /* Begin PBXFileReference section */
 		9B1099F62D95F4ED009027E9 /* BigMetric iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BigMetric iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BigMetric Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9B2A01552DB3F1F30064CD9C /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -110,6 +113,7 @@
 				9B9D6FCB2DAD9BA6004FBB10 /* Orb in Frameworks */,
 				9B9D6FCA2DAD9BA6004FBB10 /* Orb in Frameworks */,
 				9B9D6FC92DAD9BA6004FBB10 /* Orb in Frameworks */,
+				9B2A01542DB2A8360064CD9C /* Orb in Frameworks */,
 				9BD961072DA8A35400EAB8EE /* Orb in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -120,6 +124,7 @@
 		9B1099ED2D95F4ED009027E9 = {
 			isa = PBXGroup;
 			children = (
+				9B2A01552DB3F1F30064CD9C /* .gitignore */,
 				9B1099F82D95F4ED009027E9 /* BigMetric */,
 				9B109A072D95F4EE009027E9 /* BigMetric Watch App */,
 				9B1099F72D95F4ED009027E9 /* Products */,
@@ -186,6 +191,7 @@
 				9B46E6842DA05CC2001AA5BD /* Orb */,
 				9BFD973E2DB1EE06001F7158 /* Orb */,
 				9BFD98342DB27894001F7158 /* Orb */,
+				9B2A01532DB2A8360064CD9C /* Orb */,
 			);
 			productName = "BigMetric Watch App";
 			productReference = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */;
@@ -220,7 +226,7 @@
 			mainGroup = 9B1099ED2D95F4ED009027E9;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				9BFD98332DB27894001F7158 /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
+				9B2A01522DB2A8360064CD9C /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9B1099F72D95F4ED009027E9 /* Products */;
@@ -245,6 +251,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9B2A01562DB3F20A0064CD9C /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,7 +418,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.68;
+				MARKETING_VERSION = 2.69;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -442,7 +449,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.68;
+				MARKETING_VERSION = 2.69;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -564,7 +571,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		9BFD98332DB27894001F7158 /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
+		9B2A01522DB2A8360064CD9C /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = BigMetric/Orb;
 		};
@@ -572,6 +579,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		9B109AAF2D95FC5A009027E9 /* Orb */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Orb;
+		};
+		9B2A01532DB2A8360064CD9C /* Orb */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Orb;
 		};
