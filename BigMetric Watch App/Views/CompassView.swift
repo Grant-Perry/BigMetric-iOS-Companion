@@ -5,53 +5,62 @@ struct CompassView: View {
    @State var screenBounds = WKInterfaceDevice.current().screenBounds
    @StateObject private var compassManager = CompassLMManager()
    @State private var rotateBGMode: Bool = false
-   @State private var bgRotation: Double = 0
-   @State private var arrowRotation: Double = 0
 
    var body: some View {
-	  ZStack {
-		 Image("CompassBG")
-			.resizable()
-			.scaledToFit()
-			.frame(width: screenBounds.width * 0.9, height: screenBounds.width * 0.9)
-			.rotationEffect(.degrees(rotateBGMode ? -compassManager.course : 0))
-			.animation(.spring(response: 0.5), value: rotateBGMode)
+	  Group {
+		 if !compassManager.isCompassAvailable {
+			Text("Compass not available")
+			   .foregroundColor(.white)
+		 } else if compassManager.isCalibrating {
+			Text("Calibrating compass...")
+			   .foregroundColor(.white)
+		 } else if compassManager.compassError != nil {
+			Text("Compass Error\nTry moving away from interference")
+			   .foregroundColor(.white)
+			   .multilineTextAlignment(.center)
+		 } else {
+			ZStack {
+			   Image("CompassBG")
+				  .resizable()
+				  .scaledToFit()
+				  .frame(width: screenBounds.width, height: screenBounds.width)
+				  .opacity(0.8)
+				  .rotationEffect(.degrees(rotateBGMode ? -compassManager.course : 0))
+				  .animation(.spring(response: 0.5), value: rotateBGMode)
 
-		 Circle()
-			.stroke(Color.white.opacity(0.5), lineWidth: 4)
-			.frame(width: screenBounds.width * 0.95, height: screenBounds.width * 0.95)
+			   Circle()
+				  .trim(from: 0.125, to: 0.375)
+				  .stroke(Color.green.opacity(0.7), lineWidth: 6)
+				  .frame(width: screenBounds.width * 0.95, height: screenBounds.width * 0.95)
+				  .rotationEffect(.degrees(compassManager.course - 180))
 
-		 Circle()
-			.trim(from: 0.125, to: 0.375)
-			.stroke(Color.green.opacity(0.7), lineWidth: 6)
-			.frame(width: screenBounds.width * 0.95, height: screenBounds.width * 0.95)
-			.rotationEffect(.degrees(compassManager.course - 180))
+			   Image("greenArrow")
+				  .resizable()
+				  .scaledToFit()
+				  .frame(width: 50, height: 110)
+				  .foregroundColor(.green)
+				  .rotationEffect(.degrees(rotateBGMode ? 0 : compassManager.course))
+				  .opacity(0.95)
+				  .scaleEffect(1.2)
+				  .animation(.spring(response: 0.5), value: rotateBGMode)
 
-		 Image("greenArrow")
-			.resizable()
-			.scaledToFit()
-			.frame(width: 50, height: 110)
-			.foregroundColor(.green)
-			.rotationEffect(.degrees(rotateBGMode ? 0 : compassManager.course))
-			.opacity(0.95)
-			.scaleEffect(1.2)
-			.animation(.spring(response: 0.5), value: rotateBGMode)
+			   Text(compassManager.heading)
+				  .font(.title3)
+				  .foregroundColor(.white)
+				  .bold()
+				  .shadow(radius: 15)
+				  .padding(8)
+				  .background(Circle().fill(Color.black.opacity(0.25)))
 
-		 Text(compassManager.heading)
-			.font(.title3)
-			.foregroundColor(.white)
-			.bold()
-			.shadow(radius: 15)
-			.padding(8)
-			.background(Circle().fill(Color.black.opacity(0.25)))
-
-		 VStack {
-			Spacer()
-			HStack {
-			   Text("\(Int(compassManager.course))°")
-				  .font(.system(size: 25))
-				  .offset(y: 26)
-				  .foregroundColor(.gpMinty)
+			   VStack {
+				  Spacer()
+				  HStack {
+					 Text("\(Int(compassManager.course))°")
+						.font(.system(size: 25))
+						.offset(y: 26)
+						.foregroundColor(.gpMinty)
+				  }
+			   }
 			}
 		 }
 	  }
@@ -62,11 +71,12 @@ struct CompassView: View {
 			rotateBGMode.toggle()
 		 }
 	  }
-	  // start and stop the delegate to save battery and only utilize when showing compass
 	  .onAppear {
+		 print("CompassView appeared - starting updates")
 		 compassManager.startUpdates()
 	  }
 	  .onDisappear {
+		 print("CompassView disappeared - stopping updates")
 		 compassManager.stopUpdates()
 	  }
    }

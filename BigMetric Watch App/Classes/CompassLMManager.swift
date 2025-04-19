@@ -2,44 +2,66 @@ import CoreLocation
 import SwiftUI
 
 class CompassLMManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
-    @Published var heading: String = "N"
-    @Published var course: Double = 0.0
-    
-    override init() {
-        super.init()
-        setupLocationManager()
-    }
-    
-    private func setupLocationManager() {
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.headingFilter = 5
-        locationManager.headingOrientation = .portrait
-    }
-    
-    func startUpdates() {
-        locationManager.startUpdatingLocation()
-        locationManager.startUpdatingHeading()
-    }
-    
-    func stopUpdates() {
-        locationManager.stopUpdatingHeading()
-        locationManager.stopUpdatingLocation()
-    }
-    
-    // MARK: - CLLocationManagerDelegate
-    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        course = newHeading.trueHeading
-        heading = course.toCardinalDirection()
-    }
-}
+   private let locationManager = CLLocationManager()
+   @Published var heading: String = "N"
+   @Published var course: Double = 0.0
+   @Published var compassError: Error? = nil
+   @Published var isCalibrating: Bool = false
+   @Published var isCompassAvailable: Bool = true
 
-// Helper extension for converting degrees to cardinal directions
-private extension Double {
-    func toCardinalDirection() -> String {
-        let directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-        let index = Int((self + 22.5).truncatingRemainder(dividingBy: 360) / 45.0)
-        return directions[index]
-    }
+   override init() {
+	  super.init()
+	  setupLocationManager()
+   }
+
+   private func setupLocationManager() {
+	  locationManager.delegate = self
+	  locationManager.desiredAccuracy = kCLLocationAccuracyBest
+	  locationManager.headingFilter = 5
+	  locationManager.headingOrientation = .portrait
+   }
+
+   func startUpdates() {
+	  guard CLLocationManager.headingAvailable() else {
+		 isCompassAvailable = false
+		 return
+	  }
+
+	  locationManager.startUpdatingLocation()
+	  locationManager.startUpdatingHeading()
+   }
+
+   func stopUpdates() {
+	  locationManager.stopUpdatingHeading()
+	  locationManager.stopUpdatingLocation()
+   }
+
+   // MARK: - CLLocationManagerDelegate
+   func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+	  // Only update if accuracy is acceptable
+	  guard newHeading.headingAccuracy >= 0 else {
+		 isCalibrating = true
+		 return
+	  }
+
+	  isCalibrating = false
+	  compassError = nil
+	  course = newHeading.trueHeading
+	  let direction = CardinalDirection(course: newHeading.trueHeading)
+	  heading = direction.rawValue
+   }
+
+   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+	  compassError = error
+	  if let error = error as? CLError {
+		 switch error.code {
+			case .denied:
+			   isCompassAvailable = false
+			case .headingFailure:
+			   isCalibrating = true
+			default:
+			   break
+		 }
+	  }
+   }
 }
