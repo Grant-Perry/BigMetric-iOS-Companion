@@ -15,9 +15,6 @@ import CoreLocation
 ///
 extension CLLocation {
    var cardinalDirection: CardinalDirection {
-      return CardinalDirection(course: course)
+	  return CardinalDirection.from(degrees: course)
    }
 }
-
-
-

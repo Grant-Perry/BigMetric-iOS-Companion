@@ -47,8 +47,9 @@ class CompassLMManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 	  isCalibrating = false
 	  compassError = nil
 	  course = newHeading.trueHeading
-	  let direction = CardinalDirection(course: newHeading.trueHeading)
-	  heading = direction.rawValue
+
+	  // FIX: Use the defined static method on CardinalDirection
+	  heading = CardinalDirection.from(degrees: newHeading.trueHeading).rawValue
    }
 
    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

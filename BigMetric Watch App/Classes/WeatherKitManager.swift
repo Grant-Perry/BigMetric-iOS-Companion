@@ -166,7 +166,7 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 		 self.tempVar = String(format: "%.0f", current.temperature.converted(to: .fahrenheit).value)
 		 self.symbolVar = current.symbolName
 		 self.windSpeedVar = current.wind.speed.converted(to: .milesPerHour).value
-		 self.windDirectionVar = CardinalDirection(course: current.wind.direction.converted(to: .degrees).value).rawValue
+		 self.windDirectionVar = CardinalDirection.from(degrees: current.wind.direction.converted(to: .degrees).value).rawValue
 
 		 hasWeatherForWorkout = true
 	  } catch {

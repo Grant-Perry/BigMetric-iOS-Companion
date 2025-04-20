@@ -37,20 +37,21 @@ struct RootBigMetricView: View {
 		 )
 		 .tabItem { Image(systemName: "circle.fill") }
 		 .tag(4)
+		 
+		 CompassView()
+			.tabItem { Image(systemName: "circle.fill") }
+			.tag(5)
 
 		 showHeartBeat(
 			unifiedWorkoutManager: unifiedWorkoutManager
 		 )
 		 .tabItem { Image(systemName: "circle.fill") }
-		 .tag(5)
-
-		 CompassView()
-			.tabItem { Image(systemName: "circle.fill") }
-			.tag(6)
+		 .tag(6)
 
 		 AltitudeView(unifiedWorkoutManager: unifiedWorkoutManager)
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(7)
+
 	  }
 	  .onAppear {
 		 unifiedWorkoutManager.onEndAndShowSummary = {

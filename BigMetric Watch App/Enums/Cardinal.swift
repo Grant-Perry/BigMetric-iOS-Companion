@@ -7,55 +7,52 @@
 
 import SwiftUI
 
-enum CardinalDirection: String {
-   case north = "N",
-        northeast = "NE",
-        east = "E",
-        southeast = "SE",
-        south = "S",
-        southwest = "SW",
-        west = "W",
-        northwest = "NW"
+enum CardinalDirection: String, CaseIterable {
+   case north     = "N"
+   case northEast = "NE"
+   case east      = "E"
+   case southEast = "SE"
+   case south     = "S"
+   case southWest = "SW"
+   case west      = "W"
+   case northWest = "NW"
 
-//  below is a computed property option
-//   extension CLLocation {
-//   var courseDirection: CardinalDirection {
-//      let course = self.course
-
-   init(course: CLLocationDirection) {
-      switch course {
-         case 0..<45:
-            self = .north
-         case 46..<90:
-            self = .northeast
-         case 91..<135:
-            self = .east
-         case 136..<180:
-            self = .southeast
-         case 181..<225:
-            self = .south
-         case 226..<270:
-            self = .southwest
-         case 271..<315:
-            self = .west
-         case 316..<360:
-            self = .northwest
-         default:
-            self = .north
-      }
+   /// Only four primaries for the outer circles
+   static var allPrimary: [CardinalDirection] {
+	  [.north, .east, .south, .west]
    }
 
-   var degrees: Double {
-      switch self {
-         case .north: return 0
-         case .northeast: return 45
-         case .east: return 90
-         case .southeast: return 135
-         case .south: return 180
-         case .southwest: return 225
-         case .west: return 270
-         case .northwest: return 315
-      }
+   /// Full human‑readable name
+   var fullName: String {
+	  switch self {
+		 case .north:     return "North"
+		 case .northEast: return "North East"
+		 case .east:      return "East"
+		 case .southEast: return "South East"
+		 case .south:     return "South"
+		 case .southWest: return "South West"
+		 case .west:      return "West"
+		 case .northWest: return "North West"
+	  }
+   }
+
+   /// Angle around the dial (0° at top)
+   var angle: Double {
+	  switch self {
+		 case .north:     return   0
+		 case .northEast: return  45
+		 case .east:      return  90
+		 case .southEast: return 135
+		 case .south:     return 180
+		 case .southWest: return 225
+		 case .west:      return 270
+		 case .northWest: return 315
+	  }
+   }
+
+   /// Pick the nearest of the eight for a given heading
+   static func from(degrees: Double) -> CardinalDirection {
+	  let idx = Int((degrees + 22.5) / 45.0) & 7
+	  return allCases[idx]
    }
 }
-

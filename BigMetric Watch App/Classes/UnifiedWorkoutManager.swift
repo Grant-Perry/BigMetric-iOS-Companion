@@ -81,8 +81,8 @@ class UnifiedWorkoutManager: NSObject,
 
 	  course = updatedCourse
 
-	  // Convert numeric heading to a cardinal direction string
-	  heading = CardinalDirection(course: updatedCourse).rawValue
+	  // Use the defined static method on CardinalDirection
+	  heading = CardinalDirection.from(degrees: updatedCourse).rawValue
    }
    var heartRateReadings: [Double] = []
 
@@ -948,7 +948,6 @@ struct AltitudeDataPoint: Identifiable {
    let value: Double
    let dist: Double
 }
-
 
 extension Array where Element: CLLocation {
    /// Calculates the total distance by summing each distance between consecutive locations.
