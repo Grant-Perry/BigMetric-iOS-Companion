@@ -6,6 +6,10 @@ import HealthKit
 import WatchConnectivity
 import Observation
 import UserNotifications
+import OSLog
+
+
+/// This is the CORRECT FILE version - dork
 
 /// UnifiedWorkoutManager is responsible for managing the workout session, handling location updates,
 /// HealthKit workout sessions, and route data insertion.
@@ -21,7 +25,7 @@ class UnifiedWorkoutManager: NSObject,
 
    /// A callback so the UI can show summary after finishing
    var onEndAndShowSummary: (() -> Void)?
-
+   var logMessage: String = ""
    var workoutFullySaved: Bool = false
    var isSavingToHealthKit: Bool = false
    var workoutState: WorkoutState = .notStarted
@@ -67,6 +71,11 @@ class UnifiedWorkoutManager: NSObject,
    var heartRate: Double = 0 {
 	  didSet { heartRateReadings.append(heartRate) }
    }
+
+   private let logger = Logger(subsystem: "com.gp.BigMetric.UnifiedWorkoutManager", category: "workout")
+
+   private(set) var locationAuthStatus: CLAuthorizationStatus = .notDetermined
+   private(set) var healthKitAuthStatus: Bool = false
 
    public func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
 	  // If the heading is invalid, just return
@@ -131,18 +140,78 @@ class UnifiedWorkoutManager: NSObject,
 
    init(weatherKitManager: WeatherKitManager = WeatherKitManager(),
 		geoCodeHelper: GeoCodeHelper = GeoCodeHelper()) {
-
 	  self.weatherKitManager = weatherKitManager
 	  self.geoCodeHelper = geoCodeHelper
 	  super.init()
 	  resetForNewWorkout()
 	  setPrecision()
-	  //  	  LMDelegate.allowsBackgroundLocationUpdates = true
 	  LMDelegate.activityType = .fitness
+	  LMDelegate.delegate = self  // Set delegate as early as possible
+
+	  // ADD: Proactively request necessary permissions
+	  requestLocationAuthorization()
+	  requestHKAuth()
 
 	  setupWorkoutNotificationActions()
 	  startMonitoringActivity()
 	  isWalkingTriggerOn = true
+   }
+
+   /// Request location authorization proactively.
+   func requestLocationAuthorization() {
+	  let status = LMDelegate.authorizationStatus
+	  Task { @MainActor in
+		 self.locationAuthStatus = status
+	  }
+	  if status == .notDetermined {
+		 LMDelegate.requestWhenInUseAuthorization()
+	  } else if status == .denied || status == .restricted {
+		 self.logAndPersist("[UWM] Location permission denied or restricted.")
+	  }
+   }
+
+   /// CLLocationManagerDelegate method to keep status in sync.
+   func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+	  Task { @MainActor in
+		 self.locationAuthStatus = status
+	  }
+	  switch status {
+		 case .authorizedAlways, .authorizedWhenInUse:
+			// All good, you may want to proceed with location tracking
+			return
+		 case .notDetermined:
+			manager.requestWhenInUseAuthorization()
+		 case .denied, .restricted:
+			self.logAndPersist("[UWM] Location permission denied/restricted via delegate.")
+		 @unknown default:
+			fatalError("Unhandled authorization status.")
+	  }
+   }
+
+   /// Requests authorization to read and write HealthKit data.
+   func requestHKAuth() {
+	  let toWrite: Set<HKSampleType> = [
+		 HKObjectType.workoutType(),
+		 HKSeriesType.workoutRoute()
+	  ]
+	  let toRead: Set<HKObjectType> = [
+		 HKObjectType.workoutType(),
+		 HKSeriesType.workoutRoute(),
+		 HKObjectType.quantityType(forIdentifier: .heartRate)!,
+		 HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
+		 HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
+	  ]
+	  healthStore.requestAuthorization(toShare: toWrite, read: toRead) { [weak self] success, err in
+		 DispatchQueue.main.async {
+			self?.healthKitAuthStatus = success
+			if let e = err {
+			   self?.logger.error("HealthKit auth error: \(e.localizedDescription, privacy: .public)")
+			   self?.logAndPersist("HealthKit auth error: \(e.localizedDescription)")
+			} else {
+			   self?.logAndPersist("HealthKit auth success: \(success)")
+			}
+		 }
+	  }
    }
 
    // MARK: - Weather and Location Updates
@@ -175,19 +244,19 @@ class UnifiedWorkoutManager: NSObject,
 	  locationName  = weatherKitManager.locationName
 	  weatherTemp   = weatherKitManager.tempVar
 	  weatherSymbol = weatherKitManager.symbolVar
-	  print("[UWM] Weather updated => city=\(locationName), temp=\(weatherTemp), symbol=\(weatherSymbol)")
+	  self.logger.info("[UWM] Weather updated => city=\(self.locationName), temp=\(self.weatherTemp), symbol=\(self.weatherSymbol)")
    }
 
    /// Asynchronously fetch weather and city information if needed.
    func fetchWeatherAndCityIfNeeded() async {
 	  guard locationName == "Unknown" || weatherTemp == "--" else { return }
 	  guard let finalLoc = locationsArray.last else {
-		 print("[UWM] No location data => can't do fallback weather.")
+		 self.logger.info("[UWM] No location data => can't do fallback weather.")
 		 return
 	  }
 
 	  let coord = finalLoc.coordinate
-	  print("[UWM] fallback => attempting city geocode & WeatherKit for coord:\(coord)")
+	  self.logger.info("[UWM] fallback => attempting city geocode & WeatherKit for coord:\(String(describing: coord))")
 
 	  await withCheckedContinuation { continuation in
 		 geoCodeHelper.getCityNameFromCoordinates(coord.latitude, coord.longitude) { placemark in
@@ -200,7 +269,7 @@ class UnifiedWorkoutManager: NSObject,
 
 	  await weatherKitManager.getWeather(for: coord)
 	  updateWeatherInfo(from: weatherKitManager)
-	  print("[UWM] fallback => got city=\(locationName), temp=\(weatherTemp), symbol=\(weatherSymbol)")
+	  self.logger.info("[UWM] fallback => got city=\(self.locationName), temp=\(self.weatherTemp), symbol=\(self.weatherSymbol)")
    }
 
    // MARK: - Workout Session Management
@@ -232,12 +301,12 @@ class UnifiedWorkoutManager: NSObject,
 		 let startDate = Date()
 		 session?.startActivity(with: startDate)
 		 builder?.beginCollection(withStart: startDate) { _, _ in
-			print("[UWM] beginCollection => collection started")
+			self.logger.info("[UWM] beginCollection => collection started")
 		 }
 
 		 routeBuilder = HKWorkoutRouteBuilder(healthStore: healthStore, device: nil)
 	  } catch {
-		 print("Error starting HKWorkoutSession: \(error.localizedDescription)")
+		 self.logger.error("Error starting HKWorkoutSession: \(error.localizedDescription, privacy: .public)")
 		 return
 	  }
 
@@ -271,7 +340,7 @@ class UnifiedWorkoutManager: NSObject,
 	  DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
 		 guard let self = self else { return }
 		 if self.isSavingToHealthKit && self.shouldFinishWorkoutAfterSessionEnd {
-			print("[UWM] Safety timeout reached - forcing workout completion")
+			self.logger.info("[UWM] Safety timeout reached - forcing workout completion")
 			self.finishWorkoutAndRoute()
 			self.shouldFinishWorkoutAfterSessionEnd = false
 		 }
@@ -291,13 +360,13 @@ class UnifiedWorkoutManager: NSObject,
    /// Finishes the workout and the route, writing data to HealthKit.
    func finishWorkoutAndRoute() {
 	  guard !workoutFullySaved else {
-		 print("[UWM] Workout already saved, ignoring duplicate finishWorkoutAndRoute call")
+		 self.logger.info("[UWM] Workout already saved, ignoring duplicate finishWorkoutAndRoute call")
 		 isSavingToHealthKit = false
 		 return
 	  }
 
 	  guard let thisBuilder = builder else {
-		 print("[UWM] No workout builder available, cannot finish workout")
+		 self.logger.info("[UWM] No workout builder available, cannot finish workout")
 		 isSavingToHealthKit = false
 		 return
 	  }
@@ -306,18 +375,18 @@ class UnifiedWorkoutManager: NSObject,
 		 do {
 			// End collection and await result using async extension
 			try await thisBuilder.endCollectionAsync(withEnd: Date())
-			print("[UWM] Collection ended successfully")
+			self.logger.info("[UWM] Collection ended successfully")
 
 			// ENHANCE: Weather data validation and fetching
 			if locationName == "Unknown" || weatherTemp == "--" || weatherSymbol.isEmpty {
 			   if let lastLocation = locationsArray.last {
-				  print("[UWM] Missing weather data - fetching from last waypoint")
+				  self.logger.info("[UWM] Missing weather data - fetching from last waypoint")
 				  await weatherKitManager.getWeather(for: lastLocation.coordinate)
 
 				  // Get location name if missing
 				  if locationName == "Unknown" {
 					 await withCheckedContinuation { continuation in
-						geoCodeHelper.getCityNameFromCoordinates(
+						self.geoCodeHelper.getCityNameFromCoordinates(
 						   lastLocation.coordinate.latitude,
 						   lastLocation.coordinate.longitude
 						) { placemark in
@@ -330,7 +399,7 @@ class UnifiedWorkoutManager: NSObject,
 				  }
 
 				  updateWeatherInfo(from: weatherKitManager)
-				  print("[UWM] Weather data updated: city=\(locationName), temp=\(weatherTemp), symbol=\(weatherSymbol)")
+				  self.logger.info("[UWM] Weather data updated: city=\(self.locationName), temp=\(self.weatherTemp), symbol=\(self.weatherSymbol)")
 			   }
 			}
 
@@ -338,12 +407,12 @@ class UnifiedWorkoutManager: NSObject,
 
 			// Rest of the existing code remains the same...
 			try await thisBuilder.addMetadataAsync(meta)
-			print("[UWM] Metadata added successfully")
+			self.logger.info("[UWM] Metadata added successfully")
 
 			// Existing workout finishing code...
 
 			let workout = try await thisBuilder.finishWorkoutAsync()
-			print("[UWM] Workout finished successfully: \(workout.uuid)")
+			self.logger.info("[UWM] Workout finished successfully: \(String(describing: workout.uuid))")
 
 			if let routeBuilder = self.routeBuilder, !self.locationsArray.isEmpty {
 			   try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -357,19 +426,19 @@ class UnifiedWorkoutManager: NSObject,
 					 }
 				  }
 			   }
-			   print("[UWM] Inserted \(self.locationsArray.count) locations into route before finishing.")
+			   self.logger.info("[UWM] Inserted \(self.locationsArray.count) locations into route before finishing.")
 			}
 
 			if let routeBuilder = self.routeBuilder {
 			   try await routeBuilder.finishRouteAsync(with: workout, metadata: nil)
-			   print("[UWM] Route successfully added to workout: \(workout.uuid)")
+			   self.logger.info("[UWM] Route successfully added to workout: \(String(describing: workout.uuid))")
 			}
 
 			self.workoutFullySaved = true
 			self.isSavingToHealthKit = false
 
 			DispatchQueue.main.async {
-			   print("[UWM] Calling onEndAndShowSummary callback")
+			   self.logger.info("[UWM] Calling onEndAndShowSummary callback")
 			   self.onEndAndShowSummary?()
 			}
 
@@ -377,7 +446,7 @@ class UnifiedWorkoutManager: NSObject,
 			self.isWalkingTriggerOn = true
 
 		 } catch {
-			print("[UWM] Error finishing workout: \(error.localizedDescription)")
+			self.logger.error("[UWM] Error finishing workout: \(String(describing: error.localizedDescription), privacy: .public)")
 			self.isSavingToHealthKit = false
 
 			DispatchQueue.main.async {
@@ -406,7 +475,7 @@ class UnifiedWorkoutManager: NSObject,
 		 "weatherSymbol": weatherSymbol,
 		 "energyBurned": String(format: "%.0f", energyBurned)  // Add this line
 	  ]
-	  print("[UWM] buildMetadataDictionary => \(meta)")
+	  self.logger.info("[UWM] buildMetadataDictionary => \(meta)")
 	  return meta
    }
 
@@ -467,7 +536,7 @@ class UnifiedWorkoutManager: NSObject,
 	  LMDelegate.desiredAccuracy = isPrecise ? kCLLocationAccuracyBest : kCLLocationAccuracyNearestTenMeters
 	  GPSAccuracy = 99.0
 
-	  print("resetForNewWorkout => data cleared, fresh session, location updates stopped.")
+	  self.logger.info("resetForNewWorkout => data cleared, fresh session, location updates stopped.")
    }
 
    // MARK: - Pedometer
@@ -487,15 +556,14 @@ class UnifiedWorkoutManager: NSObject,
 			   guard let self = self else { return }
 			   if let d = data {
 				  let initialSteps = Int(truncating: d.numberOfSteps)
-				  print("[Pedometer] Initial steps: \(initialSteps)")
+				  self.logger.info("[Pedometer] Initial steps: \(initialSteps)")
 				  self.holdInitialSteps = initialSteps
 
 				  self.pedometer.startUpdates(from: midnight) { [weak self] stepData, _ in
-					 guard let self = self else { return }
-					 if let stepData = stepData {
-						let currentSteps = Int(truncating: stepData.numberOfSteps)
-						self.workoutStepCount = currentSteps - self.holdInitialSteps
-					 }
+					 guard let self = self,
+						   let stepData = stepData else { return }
+					 let currentSteps = Int(truncating: stepData.numberOfSteps)
+					 self.workoutStepCount = currentSteps - self.holdInitialSteps
 				  }
 			   }
 			}
@@ -554,7 +622,7 @@ class UnifiedWorkoutManager: NSObject,
 		 if currentMiles > prevMiles {
 			lastHapticMile = currentMiles
 			WKInterfaceDevice.current().play(.notification)
-			print("[UWM] Mile alert immediately triggered at exact mile: \(currentMiles)")
+			self.logger.info("[UWM] Mile alert immediately triggered at exact mile: \(currentMiles)")
 		 }
 
 		 if let lastLocation = newLocs.last {
@@ -563,21 +631,10 @@ class UnifiedWorkoutManager: NSObject,
 	  }
    }
 
-   // MARK: - Automatic Workout Detection Methods (UPDATED)
+   // MARK: - locationManagers
 
    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-	  print("Location manager error: \(error.localizedDescription)")
-   }
-
-   public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-	  switch status {
-		 case .authorizedAlways, .authorizedWhenInUse:
-			return
-		 case .notDetermined, .denied, .restricted:
-			manager.requestWhenInUseAuthorization()
-		 @unknown default:
-			fatalError("Unhandled authorization status.")
-	  }
+	  self.logger.error("Location manager error: \(error.localizedDescription, privacy: .public)")
    }
 
    // MARK: - Driving Alert
@@ -627,28 +684,6 @@ class UnifiedWorkoutManager: NSObject,
 
    // MARK: - HealthKit Workout Session Delegate
 
-   /// Requests authorization to read and write HealthKit data.
-   func requestHKAuth() {
-	  let toWrite: Set<HKSampleType> = [
-		 HKObjectType.workoutType(),
-		 HKSeriesType.workoutRoute()
-	  ]
-	  let toRead: Set<HKObjectType> = [
-		 HKObjectType.workoutType(),
-		 HKSeriesType.workoutRoute(),
-		 HKObjectType.quantityType(forIdentifier: .heartRate)!,
-		 HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
-		 HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
-	  ]
-	  healthStore.requestAuthorization(toShare: toWrite, read: toRead) { success, err in
-		 if let e = err {
-			print("HealthKit auth error: \(e.localizedDescription)")
-		 } else {
-			print("HealthKit auth success: \(success)")
-		 }
-	  }
-   }
-
    /// Delegate method that tracks state changes in the workout session.
    ///
    /// Modification: When the session state transitions to .ended or .stopped, if the
@@ -658,7 +693,7 @@ class UnifiedWorkoutManager: NSObject,
 							  didChangeTo toState: HKWorkoutSessionState,
 							  from fromState: HKWorkoutSessionState,
 							  date: Date) {
-	  print("[UWM] Session changed from \(fromState.rawValue) to \(toState.rawValue)")
+	  self.logger.info("[UWM] Session changed from \(fromState.rawValue) to \(toState.rawValue)")
 
 	  DispatchQueue.main.async {
 		 switch toState {
@@ -674,7 +709,7 @@ class UnifiedWorkoutManager: NSObject,
 
 			   // If we intended to finish the workout, do so now after session end
 			   if self.shouldFinishWorkoutAfterSessionEnd {
-				  print("[UWM] Session ended - proceeding with finishWorkoutAndRoute")
+				  self.logger.info("[UWM] Session ended - proceeding with finishWorkoutAndRoute")
 				  self.finishWorkoutAndRoute()
 				  self.shouldFinishWorkoutAfterSessionEnd = false
 			   }
@@ -699,7 +734,7 @@ class UnifiedWorkoutManager: NSObject,
    }
 
    public func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
-	  print("Workout session error: \(error.localizedDescription)")
+	  self.logger.error("Workout session error: \(error.localizedDescription, privacy: .public)")
    }
 
    public func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
@@ -771,7 +806,7 @@ class UnifiedWorkoutManager: NSObject,
 
    func startMonitoringActivity() {
 	  guard CMMotionActivityManager.isActivityAvailable() else {
-		 print("[UWM] 🚨 Motion activity NOT available!")
+		 self.logger.info("[UWM] 🚨 Motion activity NOT available!")
 		 isWalkingTriggerOn = false
 		 return
 	  }
@@ -779,18 +814,18 @@ class UnifiedWorkoutManager: NSObject,
 	  activityManager.startActivityUpdates(to: .main) { [weak self] activity in
 		 guard let self = self, let activity = activity else { return }
 
-		 print("[UWM] ⚠️ Explicit Activity Detected: walking=\(activity.walking), running=\(activity.running), stationary=\(activity.stationary)")
+		 self.logger.info("[UWM] ⚠️ Explicit Activity Detected: walking=\(activity.walking), running=\(activity.running), stationary=\(activity.stationary)")
 
 		 if activity.stationary {
 			if self.userDeclinedCurrentActivity {
 			   self.userDeclinedCurrentActivity = false
-			   print("[UWM] ✅ User inactivity explicitly detected. Resetting declined activity flag.")
+			   self.logger.info("[UWM] ✅ User inactivity explicitly detected. Resetting declined activity flag.")
 			}
 			return
 		 }
 
 		 if (activity.walking || activity.running), self.workoutState == .notStarted {
-			print("[UWM] ✅ handlePotentialWorkoutStart explicitly called!")
+			self.logger.info("[UWM] ✅ handlePotentialWorkoutStart explicitly called!")
 			self.handlePotentialWorkoutStart()
 		 }
 	  }
@@ -800,7 +835,7 @@ class UnifiedWorkoutManager: NSObject,
 
    private func handlePotentialWorkoutStart() {
 	  guard !userDeclinedCurrentActivity else {
-		 print("[UWM] ⚠️ Explicitly NOT prompting again. User previously declined this activity.")
+		 self.logger.info("[UWM] ⚠️ Explicitly NOT prompting again. User previously declined this activity.")
 		 return
 	  }
 
@@ -839,7 +874,7 @@ class UnifiedWorkoutManager: NSObject,
    @objc private func bufferLocation(_ notification: Notification) {
 	  guard let location = notification.object as? CLLocation else { return }
 	  bufferedLocations.append(location)
-	  print("[UWM] 📍 Buffered Location Explicitly: \(location.coordinate.latitude), \(location.coordinate.longitude), accuracy=\(location.horizontalAccuracy)m")
+	  self.logger.info("[UWM] 📍 Buffered Location Explicitly: \(location.coordinate.latitude), \(location.coordinate.longitude), accuracy=\(location.horizontalAccuracy)m")
    }
 
    private func promptUserToStartWorkout() {
@@ -857,9 +892,9 @@ class UnifiedWorkoutManager: NSObject,
 
 	  UNUserNotificationCenter.current().add(request) { error in
 		 if let error = error {
-			print("[UWM] ❌ Explicit notification scheduling FAILED: \(error.localizedDescription)")
+			self.logger.error("[UWM] ❌ Explicit notification scheduling FAILED: \(error.localizedDescription, privacy: .public)")
 		 } else {
-			print("[UWM] ✅ Explicit notification scheduled successfully!")
+			self.logger.info("[UWM] ✅ Explicit notification scheduled successfully!")
 		 }
 	  }
 
@@ -873,27 +908,27 @@ class UnifiedWorkoutManager: NSObject,
 	  startNewWorkout()
 
 	  guard !bufferedLocations.isEmpty else {
-		 print("[UWM] ❌ No buffered locations explicitly available at confirmation!")
+		 self.logger.info("[UWM] ❌ No buffered locations explicitly available at confirmation!")
 		 return
 	  }
 
 	  guard let routeBuilder = routeBuilder else {
-		 print("[UWM] ❌ routeBuilder is explicitly nil!")
+		 self.logger.info("[UWM] ❌ routeBuilder is explicitly nil!")
 		 return
 	  }
 
 	  routeBuilder.insertRouteData(bufferedLocations) { success, error in
 		 if success {
-			print("[UWM] ✅ Buffered locations explicitly inserted into workout route.")
+			self.logger.info("[UWM] ✅ Buffered locations explicitly inserted into workout route.")
 		 } else if let error = error {
-			print("[UWM] ❌ Failed explicitly to insert buffered locations: \(error.localizedDescription)")
+			self.logger.error("[UWM] ❌ Failed explicitly to insert buffered locations: \(error.localizedDescription, privacy: .public)")
 		 }
 	  }
 
 	  // Explicitly calculate distance immediately for UI
 	  locationsArray.append(contentsOf: bufferedLocations)
 	  distance = locationsArray.calculatedDistance / metersToMiles
-	  print("[UWM] ✅ Explicitly updated distance from buffered locations: \(distance) miles.")
+	  self.logger.info("[UWM] ✅ Explicitly updated distance from buffered locations: \(self.distance) miles.")
 
 	  clearBufferedLocations()
    }
@@ -901,7 +936,7 @@ class UnifiedWorkoutManager: NSObject,
    func userDeclinedWorkout() {
 	  clearBufferedLocations()
 	  userDeclinedCurrentActivity = true
-	  print("[UWM] ✅ User explicitly declined workout. Temporarily disabling further alerts for this session.")
+	  self.logger.info("[UWM] ✅ User explicitly declined workout. Temporarily disabling further alerts for this session.")
    }
 
    private func clearBufferedLocations() {
@@ -921,10 +956,10 @@ class UnifiedWorkoutManager: NSObject,
 	  if !isOn {
 		 clearBufferedLocations()
 		 activityManager.stopActivityUpdates()
-		 print("[UWM] 🚫 Walking trigger explicitly turned OFF. Buffered locations cleared.")
+		 self.logger.info("[UWM] 🚫 Walking trigger explicitly turned OFF. Buffered locations cleared.")
 	  } else {
 		 startMonitoringActivity()
-		 print("[UWM] ✅ Walking trigger explicitly turned ON.")
+		 self.logger.info("[UWM] ✅ Walking trigger explicitly turned ON.")
 	  }
    }
 
@@ -933,6 +968,16 @@ class UnifiedWorkoutManager: NSObject,
 	  LMDelegate.delegate = nil  // Remove self as delegate
 	  LMDelegate.stopUpdatingLocation()
 	  LMDelegate.stopUpdatingHeading()
+   }
+
+   // MARK: - helper to persist the OSLog
+   func logAndPersist(_ message: String) {
+	  logger.info("\(message, privacy: .public)")
+	  let timestamp = ISO8601DateFormatter().string(from: Date())
+	  let entry = "[\(timestamp)] \(message)"
+	  var logs = UserDefaults.standard.stringArray(forKey: "logHistory") ?? []
+	  logs.append(entry)
+	  UserDefaults.standard.set(Array(logs.suffix(250)), forKey: "logHistory") // limit to last 250 logs
    }
 
    // MARK: End of Class

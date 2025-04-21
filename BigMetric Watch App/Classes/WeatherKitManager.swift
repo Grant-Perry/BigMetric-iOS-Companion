@@ -57,7 +57,18 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
    init(unifiedWorkoutManager: UnifiedWorkoutManager? = nil) {
 	  self.unifiedWorkoutManager = unifiedWorkoutManager
 	  super.init()
-	  print("[WeatherKit] Initializing with manager: \(unifiedWorkoutManager != nil)")
+	  self.logAndPersist_external("[WeatherKit] Initializing with manager: \(unifiedWorkoutManager != nil)")
+   }
+
+   // MARK: - Centralized Log via UnifiedWorkoutManager
+   private func logAndPersist_external(_ message: String) {
+	  if let unifiedMgr = unifiedWorkoutManager {
+		 unifiedMgr.logAndPersist(message)
+	  } else {
+#if DEBUG
+		 print(message)
+#endif
+	  }
    }
 
    // MARK: - Reset weather state for new workout
@@ -76,6 +87,8 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 	  tempVar = ""
 	  windSpeedVar = 0
 	  windDirectionVar = ""
+	  // Log reset state centrally
+	  logAndPersist_external("[WeatherKit] Weather state reset")
    }
 
    // If you need to start location updates purely from WeatherKitManager:
@@ -100,7 +113,7 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 			location.horizontalAccuracy <= 50.0
 	  else { return }
 
-	  print("[WeatherKit] Got accurate location => fetching weather once per workout.")
+	  logAndPersist_external("[WeatherKit] Got accurate location => fetching weather once per workout.")
 	  Task {
 		 await getWeather(for: location.coordinate)
 		 hasWeatherForWorkout = true
@@ -108,15 +121,15 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
    }
 
    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-	  print("[WeatherKit] Location error: \(error.localizedDescription)")
+	  logAndPersist_external("[WeatherKit] Location error: \(error.localizedDescription)")
    }
 
    // MARK: - Weather fetching with location name (BrokenVersion approach)
    @MainActor
    func getWeather(for coordinate: CLLocationCoordinate2D) async {
-	  print("[WeatherKit] getWeather called with coordinate: \(coordinate)")
+	  logAndPersist_external("[WeatherKit] getWeather called with coordinate: \(coordinate)")
 	  guard !hasWeatherForWorkout else {
-		 print("[WeatherKit] Already fetched weather for this workout.")
+		 logAndPersist_external("[WeatherKit] Already fetched weather for this workout.")
 		 return
 	  }
 
@@ -126,15 +139,15 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 		 let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
 		 if let placemark = try await geocoder.reverseGeocodeLocation(location).first {
 			self.locationName = placemark.locality ?? "Weather"
-			print("[WeatherKit] locationName set to: \(self.locationName)")
+			logAndPersist_external("[WeatherKit] locationName set to: \(self.locationName)")
 		 } else {
 			self.locationName = "Unknown"
-			print("[WeatherKit] Geocode => No placemark found.")
+			logAndPersist_external("[WeatherKit] Geocode => No placemark found.")
 		 }
 
 		 // 2) actual WeatherKit data
 		 let weather = try await weatherService.weather(for: location)
-		 print("[WeatherKit] WeatherKit fetch success => building forecast data.")
+		 logAndPersist_external("[WeatherKit] WeatherKit fetch success => building forecast data.")
 		 let current = weather.currentWeather
 		 let hourly = weather.hourlyForecast.first
 		 let dailyFx = try? await weatherService.weather(for: location, including: .daily)
@@ -153,7 +166,7 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 			   return Forecasts(symbolName: symbolName, minTemp: minTemp, maxTemp: maxTemp)
 			}
 		 } else {
-			print("[WeatherKit] dailyForecast => none found.")
+			logAndPersist_external("[WeatherKit] dailyForecast => none found.")
 		 }
 
 		 if let hr = hourly {
@@ -170,9 +183,9 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 
 		 hasWeatherForWorkout = true
 	  } catch {
-		 print("[WeatherKit] getWeather => error: \(error.localizedDescription)")
+		 logAndPersist_external("[WeatherKit] getWeather => error: \(error.localizedDescription)")
 		 if let e = error as? URLError, e.code == .notConnectedToInternet {
-			print("[WeatherKit] Network offline => isErrorAlert=true")
+			logAndPersist_external("[WeatherKit] Network offline => isErrorAlert=true")
 			isErrorAlert = true
 		 }
 	  }
@@ -186,7 +199,7 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 		 let forecast = try await weatherService.weather(for: loc, including: .daily)
 		 return forecast
 	  } catch {
-		 print("[WeatherKit] dailyForecast => error: \(error.localizedDescription)")
+		 logAndPersist_external("[WeatherKit] dailyForecast => error: \(error.localizedDescription)")
 		 return nil
 	  }
    }
@@ -198,7 +211,7 @@ class WeatherKitManager: NSObject, CLLocationManagerDelegate, ObservableObject {
 		 let forecast = try await weatherService.weather(for: loc, including: .hourly)
 		 return forecast
 	  } catch {
-		 print("[WeatherKit] hourlyForecast => error: \(error.localizedDescription)")
+		 logAndPersist_external("[WeatherKit] hourlyForecast => error: \(error.localizedDescription)")
 		 return nil
 	  }
    }

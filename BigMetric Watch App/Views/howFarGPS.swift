@@ -238,7 +238,7 @@ struct howFarGPS: View {
 					 }) {
 						Image(systemName: "figure.run.circle")
 						   .font(.footnote)
-						   .foregroundColor(unifiedWorkoutManager.isWalkingTriggerOn ? .gpGreen : .gpRed)
+						   .foregroundColor(unifiedWorkoutManager.isWalkingTriggerOn ? .gpGreen : .gray)
 						   .cornerRadius(10)
 					 }
 					 .frame(width: width + 5, height: height + 5, alignment: .center)
@@ -254,28 +254,6 @@ struct howFarGPS: View {
 		 
 		 ZStack {
 			HStack {
-			   // updating indicator
-//			   HStack {
-//				  Circle()
-//					 .fill(
-//						LinearGradient(
-//						   gradient: Gradient(colors: [
-//							  isUp
-//							  ? isUpdatingOn
-//							  : (isHealthUpdate ? isHealthUpdateOn : isUpdatingOff),
-//							  isUp
-//							  ? isUpdatingOnStop
-//							  : isUpdatingOffStop
-//						   ]),
-//						   startPoint: .topLeading,
-//						   endPoint: .bottomTrailing
-//						)
-//					 )
-//					 .frame(width: 10, height: 10)
-//					 .offset(x: 98, y: (-screenBounds.height / 2))
-//			   }
-//			   Spacer().frame(width: 15)
-			   // GPS Strength indicator 
 			   HStack {
 				  GPSIconView(
 					 accuracy: Int(unifiedWorkoutManager.GPSAccuracy),

@@ -1,4 +1,7 @@
+// At the top, add import if not present:
 import SwiftUI
+
+// At the bottom of the TabView, add the DebugLogView as last .tabItem:
 
 struct RootBigMetricView: View {
    @ObservedObject var unifiedWorkoutManager: UnifiedWorkoutManager
@@ -37,7 +40,7 @@ struct RootBigMetricView: View {
 		 )
 		 .tabItem { Image(systemName: "circle.fill") }
 		 .tag(4)
-		 
+
 		 CompassView()
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(5)
@@ -52,12 +55,15 @@ struct RootBigMetricView: View {
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(7)
 
+		 // ADD: DebugLogView as the last tab
+		 DebugLogView()
+			.tabItem { Image(systemName: "doc.text.magnifyingglass") }
+			.tag(8)
 	  }
 	  .onAppear {
 		 unifiedWorkoutManager.onEndAndShowSummary = {
 			self.selectedTab = 4
 		 }
-
 		 unifiedWorkoutManager.requestHKAuth()
 		 selectedTab = 2
 	  }

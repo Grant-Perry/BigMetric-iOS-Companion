@@ -27,38 +27,49 @@ import CoreLocation
 /////
 
 extension Array where Element == CLLocation {
-	var calcDistance: Double {
-
-		guard count > 1 else { return 0 }
-		var mapDistance = Double.zero
-
-		for i in 0..<count-1 {
-			let location = self[i]
-			let nextLocation = self[i+1]
-			mapDistance += nextLocation.distance(from: location)
-		}
-		print("CLLocation.distance count = \(count) - calcDistance = \(mapDistance / 1609.344)")
-		return mapDistance / 1609.344 // convert from meters
-	}
-
-	var elevation: Double {
-		guard count > 1 else { return 0 }
-		var mapElevation = Double.zero
-
-		for i in 0..<count-1 {
-			let location = self[i]
-			let nextLocation = self[i+1]
-			let delta = nextLocation.altitude - location.altitude
-			if delta > 0 {
-				mapElevation += delta
-			}
-		}
-		return mapElevation
-	}
+   var calcDistance: Double {
+	  
+	  guard count > 1 else { return 0 }
+	  var mapDistance = Double.zero
+	  
+	  for i in 0..<count-1 {
+		 let location = self[i]
+		 let nextLocation = self[i+1]
+		 mapDistance += nextLocation.distance(from: location)
+	  }
+	  logAndPersist("[CLLocation.distance] count = \(count) - calcDistance = \(mapDistance / 1609.344)")
+	  return mapDistance / 1609.344 // convert from meters
+   }
+   
+   var elevation: Double {
+	  guard count > 1 else { return 0 }
+	  var mapElevation = Double.zero
+	  
+	  for i in 0..<count-1 {
+		 let location = self[i]
+		 let nextLocation = self[i+1]
+		 let delta = nextLocation.altitude - location.altitude
+		 if delta > 0 {
+			mapElevation += delta
+		 }
+	  }
+	  return mapElevation
+   }
 }
 
 extension CLLocationCoordinate2D {
-	var location: CLLocation {
-		CLLocation(latitude: latitude, longitude: longitude)
-	}
+   var location: CLLocation {
+	  CLLocation(latitude: latitude, longitude: longitude)
+   }
+}
+
+private func logAndPersist(_ message: String) {
+   let timestamp = ISO8601DateFormatter().string(from: Date())
+   let entry = "[\(timestamp)] \(message)"
+   var logs = UserDefaults.standard.stringArray(forKey: "logHistory") ?? []
+   logs.append(entry)
+   UserDefaults.standard.set(Array(logs.suffix(250)), forKey: "logHistory")
+#if DEBUG
+   print(message)
+#endif
 }

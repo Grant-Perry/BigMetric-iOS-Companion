@@ -13,16 +13,16 @@ import CoreLocation
 import HealthKit
 
 struct debugScreen: View {
-
+   
    /// The final unified manager
    @State var unifiedWorkoutManager: UnifiedWorkoutManager
-
+   
    /// Weather references
    @State var weatherKitManager: WeatherKitManager
    @State var geoCodeHelper: GeoCodeHelper
-
+   
    @State private var showWeatherStatsView = false
-
+   
    var body: some View {
 	  ZStack {
 		 /// The gpDeltaPurple gradient swoosh background
@@ -36,7 +36,7 @@ struct debugScreen: View {
 			endPoint: .bottomTrailing
 		 )
 		 .ignoresSafeArea()
-
+		 
 		 /// The main form content
 		 ScrollView {
 			VStack(spacing: 16) {
@@ -47,7 +47,7 @@ struct debugScreen: View {
 				  .padding(.top)
 				  .frame(maxWidth: .infinity, alignment: .leading)
 				  .padding(.horizontal)
-
+			   
 			   // Weather Section with modern card design
 			   VStack {
 				  Button(action: {
@@ -65,14 +65,14 @@ struct debugScreen: View {
 				  .buttonStyle(.plain)
 			   }
 			   .padding(.horizontal)
-
+			   
 			   // Debug Toggles with modern switch styling
 			   VStack(alignment: .leading, spacing: 12) {
 				  Text("Settings")
 					 .font(.system(size: 20, weight: .semibold))
 					 .foregroundColor(.white)
 					 .padding(.horizontal)
-
+				  
 				  VStack(spacing: 8) {
 					 Toggle("Haptic Feedback", isOn: $unifiedWorkoutManager.isBeep)
 						.toggleStyle(SwitchToggleStyle(tint: .blue))
@@ -86,14 +86,14 @@ struct debugScreen: View {
 				  .cornerRadius(15)
 			   }
 			   .padding(.horizontal)
-
+			   
 			   // Activity Type with modern icon buttons
 			   VStack(alignment: .leading, spacing: 12) {
 				  Text("Activity Type")
 					 .font(.system(size: 20, weight: .semibold))
 					 .foregroundColor(.white)
 					 .padding(.horizontal)
-
+				  
 				  HStack(spacing: 20) {
 					 ForEach([ActivityTypeSetup.walk, .run, .bike]) { choice in
 						activityTypeButton(choice)
@@ -105,7 +105,7 @@ struct debugScreen: View {
 				  .cornerRadius(15)
 			   }
 			   .padding(.horizontal)
-
+			   
 			   // Version info with modern styling
 			   Text("\(AppConstants.appName) - ver: \(AppConstants.getVersion())")
 				  .font(.system(size: 14, weight: .medium))
@@ -125,8 +125,8 @@ struct debugScreen: View {
 		 .navigationTitle("Debug Screen")
 		 .navigationBarTitleDisplayMode(.inline)
 		 .onAppear {
-			print("[DebugScreen] onAppear => weIsRecording: \(unifiedWorkoutManager.weIsRecording)")
-
+			logAndPersist("[DebugScreen] onAppear => weIsRecording: \(unifiedWorkoutManager.weIsRecording)")
+			
 			if unifiedWorkoutManager.weIsRecording,
 			   let location = unifiedWorkoutManager.LMDelegate.location,
 			   location.horizontalAccuracy <= 50.0
@@ -139,7 +139,7 @@ struct debugScreen: View {
 		 }
 	  }
    }
-
+   
    /// The row of SF Symbol buttons for .walk, .run, .bike
    private func activityTypeButton(_ choice: ActivityTypeSetup) -> some View {
 	  Button {
@@ -161,5 +161,16 @@ struct debugScreen: View {
 		 )
 	  }
 	  .buttonStyle(.plain)
+   }
+   
+   private func logAndPersist(_ message: String) {
+	  let timestamp = ISO8601DateFormatter().string(from: Date())
+	  let entry = "[\(timestamp)] \(message)"
+	  var logs = UserDefaults.standard.stringArray(forKey: "logHistory") ?? []
+	  logs.append(entry)
+	  UserDefaults.standard.set(Array(logs.suffix(250)), forKey: "logHistory")
+#if DEBUG
+	  print(message)
+#endif
    }
 }

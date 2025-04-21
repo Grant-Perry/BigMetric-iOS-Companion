@@ -50,6 +50,11 @@ enum CardinalDirection: String, CaseIterable {
 	  }
    }
 
+   /// Returns the closest 8-point cardinal direction for a heading in degrees.
+   static func closestDirection(to degrees: Double) -> CardinalDirection {
+	  from(degrees: degrees)
+   }
+
    /// Pick the nearest of the eight for a given heading
    static func from(degrees: Double) -> CardinalDirection {
 	  let idx = Int((degrees + 22.5) / 45.0) & 7
