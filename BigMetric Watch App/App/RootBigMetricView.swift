@@ -7,7 +7,6 @@ struct RootBigMetricView: View {
    @ObservedObject var unifiedWorkoutManager: UnifiedWorkoutManager
    @ObservedObject var weatherKitManager: WeatherKitManager
    @State var geoCodeHelper: GeoCodeHelper
-
    @Binding var selectedTab: Int
 
    var body: some View {
@@ -45,20 +44,22 @@ struct RootBigMetricView: View {
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(5)
 
-		 showHeartBeat(
-			unifiedWorkoutManager: unifiedWorkoutManager
-		 )
-		 .tabItem { Image(systemName: "circle.fill") }
-		 .tag(6)
+		 WatchView()
+			.tabItem { Image(systemName: "circle.fill") }
+			.tag(6)
 
 		 AltitudeView(unifiedWorkoutManager: unifiedWorkoutManager)
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(7)
 
+		 showHeartBeat(unifiedWorkoutManager:unifiedWorkoutManager)
+			.tabItem { Image(systemName: "circle.fill") }
+			.tag(8)
+
 		 // ADD: DebugLogView as the last tab
 		 DebugLogView()
 			.tabItem { Image(systemName: "doc.text.magnifyingglass") }
-			.tag(8)
+			.tag(9)
 	  }
 	  .onAppear {
 		 unifiedWorkoutManager.onEndAndShowSummary = {

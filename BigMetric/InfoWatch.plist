@@ -41,7 +41,7 @@
 	<key>WKCompanionAppBundleIdentifier</key>
 	<string>com.grantperry.BigMetric</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>
-	<true/>
+	<false/>
 	<key>WKWatchOnlyApp</key>
 	<true/>
 </dict>

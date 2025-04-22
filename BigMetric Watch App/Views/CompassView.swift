@@ -5,7 +5,7 @@ struct CompassView: View {
    @State var screenBounds = WKInterfaceDevice.current().screenBounds
    @StateObject private var compassManager = CompassLMManager()
    @State private var rotateBGMode: Bool = false
-   
+
    var body: some View {
 	  Group {
 		 if !compassManager.isCompassAvailable {
@@ -27,13 +27,13 @@ struct CompassView: View {
 				  .opacity(0.8)
 				  .rotationEffect(.degrees(rotateBGMode ? -compassManager.course : 0))
 				  .animation(.spring(response: 0.5), value: rotateBGMode)
-			   
+
 			   Circle()
 				  .trim(from: 0.125, to: 0.375)
 				  .stroke(Color.green.opacity(0.7), lineWidth: 6)
 				  .frame(width: screenBounds.width * 0.95, height: screenBounds.width * 0.95)
 				  .rotationEffect(.degrees(compassManager.course - 180))
-			   
+
 			   Image("greenArrow")
 				  .resizable()
 				  .scaledToFit()
@@ -43,7 +43,7 @@ struct CompassView: View {
 				  .opacity(0.95)
 				  .scaleEffect(1.2)
 				  .animation(.spring(response: 0.5), value: rotateBGMode)
-			   
+
 			   Text(compassManager.heading)
 				  .font(.title3)
 				  .foregroundColor(.white)
@@ -51,7 +51,7 @@ struct CompassView: View {
 				  .shadow(radius: 15)
 				  .padding(8)
 				  .background(Circle().fill(Color.black.opacity(0.25)))
-			   
+
 			   VStack {
 				  Spacer()
 				  HStack {
@@ -72,25 +72,25 @@ struct CompassView: View {
 		 }
 	  }
 	  .onAppear {
-		 logAndPersist("[CompassView] appearing - starting updates")
+		 //		 logAndPersist("[CompassView] appearing - starting updates")
 		 compassManager.startUpdates()
 	  }
 	  .onDisappear {
-		 logAndPersist("[CompassView] disappearing - stopping updates")
+		 //		 logAndPersist("[CompassView] disappearing - stopping updates")
 		 compassManager.stopUpdates()
 	  }
    }
-   
-   private func logAndPersist(_ message: String) {
-	  let timestamp = ISO8601DateFormatter().string(from: Date())
-	  let entry = "[\(timestamp)] \(message)"
-	  var logs = UserDefaults.standard.stringArray(forKey: "logHistory") ?? []
-	  logs.append(entry)
-	  UserDefaults.standard.set(Array(logs.suffix(250)), forKey: "logHistory")
-#if DEBUG
-	  print(message)
-#endif
-   }
+
+   //   private func logAndPersist(_ message: String) {
+   //	  let timestamp = ISO8601DateFormatter().string(from: Date())
+   //	  let entry = "[\(timestamp)] \(message)"
+   //	  var logs = UserDefaults.standard.stringArray(forKey: "logHistory") ?? []
+   //	  logs.append(entry)
+   //	  UserDefaults.standard.set(Array(logs.suffix(250)), forKey: "logHistory")
+   //#if DEBUG
+   //	  print(message)
+   //#endif
+   //   }
 }
 
 #Preview {
