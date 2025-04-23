@@ -13,28 +13,23 @@ struct CompassDialView: View {
 		 let cardinalRadius = size * 0.42
 
 		 ZStack {
-			// Rotating tick marks (dial)
-			ZStack {
-			   ForEach(0..<60, id: \.self) { tick in
-				  let isCardinal = tick % 15 == 0  // Every 15 ticks is 90 degrees
-				  Rectangle()
-					 .fill(isCardinal ? Color.white : Color.gray.opacity(0.5))
-					 .frame(width: isCardinal ? 2 : 1,
-							height: isCardinal ? 12 : 6)
-					 .offset(y: -tickRadius)
-					 .rotationEffect(.degrees(Double(tick) * 6))
-			   }
+			// Tick marks
+			ForEach(0..<60, id: \.self) { tick in
+			   let isCardinal = tick % 15 == 0
+			   Rectangle()
+				  .fill(isCardinal ? Color.white : Color.gray.opacity(0.5))
+				  .frame(width: isCardinal ? 2 : 1,
+						 height: isCardinal ? 12 : 6)
+				  .offset(y: -tickRadius)
+				  .rotationEffect(.degrees(Double(tick) * 6))
 			}
-			.frame(width: size, height: size)
-			.rotationEffect(.degrees(-heading))  // rotate only the ticks
 
-			// Fixed cardinal labels (N, E, S, W)
+			// Cardinal labels
 			ForEach(CardinalDirection.allPrimary, id: \.self) { direction in
 			   Text(direction.rawValue)
 				  .font(.system(size: 20, weight: .bold))
 				  .foregroundColor(.white)
 				  .shadow(radius: 1)
-			   // Position labels directly at their cardinal points
 				  .position(
 					 x: geo.size.width / 2 + CGFloat(sin(direction.angle * .pi / 180)) * cardinalRadius,
 					 y: geo.size.height / 2 - CGFloat(cos(direction.angle * .pi / 180)) * cardinalRadius

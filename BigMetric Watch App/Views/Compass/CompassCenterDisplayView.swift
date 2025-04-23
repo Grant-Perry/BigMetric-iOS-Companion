@@ -15,6 +15,9 @@ struct CompassCenterDisplayView: View {
 
    var body: some View {
 	  VStack(spacing: 6) {
+		 Spacer()
+		 Spacer()
+
 		 HStack(spacing: 4) {
 			Image(systemName: "mappin.and.ellipse")
 			   .font(.system(size: 12))
@@ -23,27 +26,34 @@ struct CompassCenterDisplayView: View {
 		 }
 		 .frame(maxWidth: .infinity)
 
-		 Text(String(format: "%.0f°", headingDegrees))
-			.font(.system(size: 32, weight: .bold))
-			.foregroundColor(.white)
-			.shadow(radius: 2)
+		 VStack(spacing: 0) {
+			Text(String(format: "%.0f°", headingDegrees))
+			   .font(.system(size: 32, weight: .bold))
+			   .foregroundColor(.white)
+			   .shadow(radius: 2)
+			   .frame(maxWidth: .infinity, alignment: .center)
 
-//		 Text(cardinal)
-//			.font(.system(size: 18, weight: .medium))
-//			.foregroundColor(.white.opacity(0.9))
-
-		 if let coordinate = coordinate {
-			VStack(spacing: 2) {
-			   if let locationName = locationName {
-				  Text(locationName)
-					 .font(.footnote)
-					 .foregroundColor(.white.opacity(0.8))
-			   }
-			   Text(String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude))
+			if let locationName = locationName {
+			   Text(locationName)
 				  .font(.footnote)
-				  .foregroundColor(.white.opacity(0.7))
+				  .foregroundColor(.white.opacity(0.8))
+				  .frame(maxWidth: .infinity)
+				  .lineLimit(1)
+				  .minimumScaleFactor(0.5)
+				  .scaledToFit()
+				  .offset(y: -10)
+
 			}
 		 }
+		 .offset(y: 20)
+
+		 Spacer()
+
+		 //         if let coordinate = coordinate {
+		 //            Text(String(format: "%.4f, %.4f", coordinate.latitude, coordinate.longitude))
+		 //               .font(.footnote)
+		 //               .foregroundColor(.white.opacity(0.7))
+		 //         }
 	  }
 	  .frame(width: 120, height: 120)
 	  .multilineTextAlignment(.center)
