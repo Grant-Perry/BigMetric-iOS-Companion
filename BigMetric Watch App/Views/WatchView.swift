@@ -14,7 +14,7 @@ struct WatchView: View {
    // Mirror the configuration logic from ButtonView
    var orbConfig: OrbConfiguration {
 	  OrbConfiguration(
-		 backgroundColors: [.green, .blue, .pink],
+		 backgroundColors: [.yellow, .green, .pink], // easter
 		 glowColor: .white,
 		 coreGlowIntensity: 1.0, // or 0.25 for "down" state if you wish to add state
 		 showWavyBlobs: true,
@@ -34,7 +34,7 @@ struct WatchView: View {
 	  let orbViewHeight  = (screenBounds.height / 1.5) * 0.95 * scale
 
 	  // MARK: Black Circle Diameter follows (unchanged)
-	  let blackWidth = 0.75
+	  let blackWidth = 0.8
 	  let blackCircleWidth  = screenBounds.width * blackWidth
 	  let blackCircleHeight = screenBounds.height * blackWidth
 
@@ -44,7 +44,8 @@ struct WatchView: View {
 			   Circle()
 				  .fill(Color.white)
 				  .frame(width: orbFrameWidth, height: orbFrameHeight)
-				  .blur(radius: 23)
+				  .blur(radius: 43)
+				  .opacity(0.7)
 			}
 			.overlay(
 			   OrbView(configuration: orbConfig)
@@ -54,7 +55,12 @@ struct WatchView: View {
 		 }
 		 // Black center circle
 		 Circle()
-			.fill(Color.black).opacity(0.3)
+			.fill(
+			   RadialGradient(gradient: Gradient(colors: [.gpBlue, .clear]),
+							  center: .center,
+							  startRadius: 0,
+							  endRadius: blackCircleWidth / 1.65)
+			).opacity(0.4)
 			.frame(width: blackCircleWidth, height: blackCircleHeight)
 			.shadow(color: .black.opacity(0.98), radius: 28, x: 0, y: 0)
 			.overlay(
@@ -65,7 +71,7 @@ struct WatchView: View {
 					 .foregroundColor(.white)
 					 .minimumScaleFactor(0.5)
 					 .lineLimit(1)
-					 .kerning(2)
+					 .kerning(-2)
 					 .frame(maxWidth: .infinity)
 				  TimeSecLabel(date: currentTime)
 					 .frame(maxWidth: .infinity)
@@ -111,23 +117,23 @@ struct TimeSecLabel: View {
 
    var body: some View {
 	  HStack(alignment: .firstTextBaseline, spacing: 2) {
-// MARK: SECONDS
+		 // MARK: SECONDS
 		 Text(Self.secFormatter.string(from: date))
-			.font(.system(size: 30, weight: .thin, design: .rounded))
+			.font(.system(size: 34, weight: .thin, design: .rounded))
 			.foregroundColor(.white)
-			.kerning(1.4)
+			.kerning(-1.5)
 			.lineLimit(1)
 			.minimumScaleFactor(0.16)
 			.padding(.leading)
-//			.offset(x: 20)
-//MARK: AM/PM
+		 //			.offset(x: 20)
+		 //MARK: AM/PM
 		 Text(Self.ampmFormatter.string(from: date))
 			.font(.system(size: 14, weight: .light, design: .rounded))
 			.foregroundColor(.white.opacity(0.86))
-			.baselineOffset(6)
+			.baselineOffset(16)
 	  }
 	  .frame(maxWidth: .infinity, alignment: .center)
-	  .offset(x: 30, y: -10)
+	  .offset(x: 32, y: -15)
    }
 }
 

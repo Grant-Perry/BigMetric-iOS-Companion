@@ -8,6 +8,8 @@ struct RootBigMetricView: View {
    @ObservedObject var weatherKitManager: WeatherKitManager
    @State var geoCodeHelper: GeoCodeHelper
    @Binding var selectedTab: Int
+   // ADD: Initialize ViewModel for DigitalCompassView
+   @State private var digitalCompassViewModel = DigitalCompassViewModel()
 
    var body: some View {
 	  TabView(selection: $selectedTab) {
@@ -44,22 +46,27 @@ struct RootBigMetricView: View {
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(5)
 
-		 WatchView()
+		 // CHANGE: Add viewModel parameter
+		 DigitalCompassView(digitalCompassViewModel: digitalCompassViewModel)
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(6)
 
-		 AltitudeView(unifiedWorkoutManager: unifiedWorkoutManager)
+		 WatchView()
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(7)
 
-		 showHeartBeat(unifiedWorkoutManager:unifiedWorkoutManager)
+		 AltitudeView(unifiedWorkoutManager: unifiedWorkoutManager)
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(8)
+
+		 showHeartBeat(unifiedWorkoutManager:unifiedWorkoutManager)
+			.tabItem { Image(systemName: "circle.fill") }
+			.tag(9)
 
 		 // ADD: DebugLogView as the last tab
 		 DebugLogView()
 			.tabItem { Image(systemName: "doc.text.magnifyingglass") }
-			.tag(9)
+			.tag(10)
 	  }
 	  .onAppear {
 		 unifiedWorkoutManager.onEndAndShowSummary = {

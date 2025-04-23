@@ -3,8 +3,8 @@ import SwiftUI
 
 class CompassLMManager: NSObject, ObservableObject, CLLocationManagerDelegate {
    private let locationManager = CLLocationManager()
-   @Published var heading: String = "N"
-   @Published var course: Double = 0.0
+   @Published var heading: String = "SE"
+   @Published var course: Double = 90.0
    @Published var compassError: Error? = nil
    @Published var isCalibrating: Bool = false
    @Published var isCompassAvailable: Bool = true

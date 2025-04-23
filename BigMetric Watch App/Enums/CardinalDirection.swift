@@ -1,10 +1,3 @@
-//
-//  Cardinal.swift
-//  howFar Watch App
-//
-//  Created by Grant Perry on 3/30/23.
-//
-
 import SwiftUI
 
 enum CardinalDirection: String, CaseIterable {

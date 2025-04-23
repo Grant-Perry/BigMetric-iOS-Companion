@@ -8,17 +8,17 @@ struct CompassView: View {
 
    var body: some View {
 	  Group {
-		 if !compassManager.isCompassAvailable {
-			Text("Compass not available")
-			   .foregroundColor(.white)
-		 } else if compassManager.isCalibrating {
-			Text("Calibrating compass...")
-			   .foregroundColor(.white)
-		 } else if compassManager.compassError != nil {
-			Text("Compass Error\nTry moving away from interference")
-			   .foregroundColor(.white)
-			   .multilineTextAlignment(.center)
-		 } else {
+//		 if !compassManager.isCompassAvailable {
+//			Text("Compass not available")
+//			   .foregroundColor(.white)
+//		 } else if compassManager.isCalibrating {
+//			Text("Calibrating compass...")
+//			   .foregroundColor(.white)
+//		 } else if compassManager.compassError != nil {
+//			Text("Compass Error\nTry moving away from interference")
+//			   .foregroundColor(.white)
+//			   .multilineTextAlignment(.center)
+//		 } else {
 			ZStack {
 			   Image("CompassBG")
 				  .resizable()
@@ -62,7 +62,7 @@ struct CompassView: View {
 				  }
 			   }
 			}
-		 }
+//		 }
 	  }
 	  .font(.headline)
 	  .scaleEffect(0.97)
