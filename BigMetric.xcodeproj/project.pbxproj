@@ -93,6 +93,11 @@
 			path = "BigMetric Watch App";
 			sourceTree = "<group>";
 		};
+		9BBE249E2DBA850200DCC5B6 /* Fonts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +129,7 @@
 		9B1099ED2D95F4ED009027E9 = {
 			isa = PBXGroup;
 			children = (
+				9BBE249E2DBA850200DCC5B6 /* Fonts */,
 				9B2A01552DB3F1F30064CD9C /* .gitignore */,
 				9B1099F82D95F4ED009027E9 /* BigMetric */,
 				9B109A072D95F4EE009027E9 /* BigMetric Watch App */,
@@ -181,6 +187,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				9B109A072D95F4EE009027E9 /* BigMetric Watch App */,
+				9BBE249E2DBA850200DCC5B6 /* Fonts */,
 			);
 			name = "BigMetric Watch App";
 			packageProductDependencies = (
@@ -418,7 +425,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.75;
+				MARKETING_VERSION = 2.76;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -449,7 +456,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.75;
+				MARKETING_VERSION = 2.76;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;

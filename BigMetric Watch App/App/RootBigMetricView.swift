@@ -51,9 +51,14 @@ struct RootBigMetricView: View {
 			.tabItem { Image(systemName: "circle.fill") }
 			.tag(6)
 
-		 WatchView()
-			.tabItem { Image(systemName: "circle.fill") }
-			.tag(7)
+		 // UPDATE: Add unifiedWorkoutManager, weatherKitManager and geoCodeHelper
+		 WatchView(
+			weatherKitManager: weatherKitManager,
+			unifiedWorkoutManager: unifiedWorkoutManager,
+			geoCodeHelper: geoCodeHelper
+		 )
+		 .tabItem { Image(systemName: "circle.fill") }
+		 .tag(7)
 
 		 AltitudeView(unifiedWorkoutManager: unifiedWorkoutManager)
 			.tabItem { Image(systemName: "circle.fill") }

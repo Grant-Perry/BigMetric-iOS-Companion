@@ -3,87 +3,70 @@ import CoreLocation
 import Orb
 import Foundation
 
-struct CompassYellowRing: View {
+struct YellowOnBoxes: View {
    let heading: Double
-   let rotateBGMode: Bool
    let boxCount: Int = 60
-   let tickWidth: CGFloat = 1
-   let tickHeight: CGFloat = 6
    let boxSize: CGFloat = 6
    let ringScale: CGFloat = 1.1
-   
+
    private var angleStep: Double { 360.0 / Double(boxCount) }
-   
+
    private var boxGradient: AnyShapeStyle {
 	  .init(
 		 AngularGradient(
-			gradient: Gradient(colors: [.gpYellow, .gpOrange]),
+			gradient: Gradient(colors: [.gpWhite, .gpOrange]),
 			center: .center,
 			startAngle: .degrees(-45),
 			endAngle: .degrees(45)
 		 )
 	  )
    }
-   
+
    var body: some View {
 	  GeometryReader { geo in
 		 let size = min(geo.size.width, geo.size.height)
 		 let baseR = size * 0.45
 		 let rCenter = baseR + boxSize/2
-		 
+
 		 ZStack {
-			// Static background of tick marks
-			ForEach(0..<boxCount, id: \.self) { i in
-			   let angleDeg = Double(i) * angleStep
-			   let angleRad = angleDeg * .pi/180
-			   
-			   Rectangle()
-				  .fill(Color.yellow.opacity(0.3))
-				  .frame(width: tickWidth, height: tickHeight)
-				  .rotationEffect(.degrees(angleDeg))
-				  .offset(
-					 x: rCenter * CGFloat(cos(Double(angleRad))),
-					 y: rCenter * CGFloat(sin(Double(angleRad)))
-				  )
-			}
-			
-			// Illuminated pattern
+			// Rotating illuminated pattern
 			ZStack {
 			   // Center box
 			   Rectangle()
 				  .fill(boxGradient)
 				  .frame(width: boxSize, height: boxSize)
-				  .offset(y: -rCenter)
-			   
+				  .offset(
+					 x: rCenter * CGFloat(cos(Double(0))),
+					 y: rCenter * CGFloat(sin(Double(0)))
+				  )
+
 			   // Adjacent boxes
 			   ForEach([-1, 1], id: \.self) { offset in
 				  Rectangle()
 					 .fill(boxGradient)
 					 .frame(width: boxSize, height: boxSize)
-					 .offset(y: -rCenter)
-					 .rotationEffect(.degrees(Double(offset) * angleStep))
+					 .offset(
+						x: rCenter * CGFloat(cos(Double(offset) * angleStep * .pi/180)),
+						y: rCenter * CGFloat(sin(Double(offset) * angleStep * .pi/180))
+					 )
 					 .opacity(0.6)
 			   }
-			   
+
 			   // Adjacent-adjacent boxes
 			   ForEach([-2, 2], id: \.self) { offset in
 				  Rectangle()
 					 .fill(boxGradient)
 					 .frame(width: boxSize, height: boxSize)
-					 .offset(y: -rCenter)
-					 .rotationEffect(.degrees(Double(offset) * angleStep))
+					 .offset(
+						x: rCenter * CGFloat(cos(Double(offset) * angleStep * .pi/180)),
+						y: rCenter * CGFloat(sin(Double(offset) * angleStep * .pi/180))
+					 )
 					 .opacity(0.3)
 			   }
 			}
+			.rotationEffect(.degrees(-90))
 			.rotationEffect(.degrees(heading))
 		 }
-		 .rotationEffect(.degrees(rotateBGMode ? -heading : 0))
-		 .frame(width: size, height: size)
 	  }
    }
-}
-
-#Preview {
-   CompassYellowRing(heading: 90, rotateBGMode: false)
-   
 }

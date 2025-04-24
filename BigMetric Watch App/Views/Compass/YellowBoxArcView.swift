@@ -4,6 +4,7 @@ import Orb
 
 struct YellowBoxArcView: View {
    let heading: Double
+   let rotateBGMode: Bool
 
    let orbMagnifier = 0.8
 
@@ -35,16 +36,11 @@ struct YellowBoxArcView: View {
 			   .aspectRatio(1, contentMode: .fit)
 			   .frame(width: size * orbMagnifier, height: size * orbMagnifier)
 
-			CompassYellowRing(heading: heading)
+			CompassYellowRing(heading: heading, rotateBGMode: rotateBGMode)
 			   .frame(width: size, height: size)
 		 }
 		 .scaleEffect(1.05)
 		 .frame(width: geo.size.width, height: geo.size.height)
 	  }
    }
-}
-
-#Preview {
-   YellowBoxArcView(heading: 0)
-	  .background(Color.black)
 }

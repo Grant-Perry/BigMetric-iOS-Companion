@@ -12,22 +12,18 @@ struct DigitalCompassView: View {
    @State var digitalCompassViewModel: DigitalCompassViewModel
    @StateObject private var weatherKitManager = WeatherKitManager()
    @State private var rotateBGMode: Bool = false
-
+   
    var body: some View {
 	  ZStack {
-		 // State 1: Only YellowBoxArc rotates with heading
-		 // State 2: YellowBoxArc stays fixed
-		 YellowBoxArcView(heading: digitalCompassViewModel.headingDegrees)
+		 YellowBoxArcView(heading: digitalCompassViewModel.headingDegrees, rotateBGMode: rotateBGMode)
 			.frame(width: 184, height: 184)
-			.rotationEffect(.degrees(rotateBGMode ? 0 : digitalCompassViewModel.headingDegrees))
-
+		 
 		 // CompassDialView rotates in State 2
 		 CompassDialView(heading: digitalCompassViewModel.headingDegrees)
 			.frame(width: 184, height: 184)
 			.rotationEffect(.degrees(rotateBGMode ? -digitalCompassViewModel.headingDegrees : 0))
-
-		 // State 1: Green arrow rotates with heading
-		 // State 2: Green arrow stays fixed
+		 
+		 // Green arrow stays fixed in State 2
 		 ZStack {
 			Image("greenArrow")
 			   .resizable()
@@ -36,7 +32,7 @@ struct DigitalCompassView: View {
 			   .foregroundColor(.green)
 			   .opacity(0.95)
 			   .scaleEffect(1.2)
-
+			
 			Text(CardinalDirection.closestDirection(to: digitalCompassViewModel.headingDegrees).rawValue)
 			   .font(.subheadline)
 			   .foregroundColor(.white)
@@ -45,8 +41,9 @@ struct DigitalCompassView: View {
 			   .padding(8)
 		 }
 		 .rotationEffect(.degrees(rotateBGMode ? 0 : digitalCompassViewModel.headingDegrees))
-
-		 // Center display stays fixed in both states
+		 // Apply animation at this level for both arrow and boxes
+		 .animation(.linear(duration: 0.1), value: digitalCompassViewModel.headingDegrees)
+		 
 		 CompassCenterDisplayView(
 			headingDegrees: digitalCompassViewModel.headingDegrees,
 			cardinal: digitalCompassViewModel.cardinalDirection,

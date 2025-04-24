@@ -8,13 +8,26 @@ import Orb
 
 struct WatchView: View {
    @State private var currentTime: Date = Date()
+   @State private var isLoading = true  // Add loading state
    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
    private let screenBounds = WKInterfaceDevice.current().screenBounds
+   @State private var address = ""
+   @State private var locationManager = CLLocationManager()
+
+   let weatherKitManager: WeatherKitManager
+   let unifiedWorkoutManager: UnifiedWorkoutManager
+   let geoCodeHelper: GeoCodeHelper
+
+   init(weatherKitManager: WeatherKitManager, unifiedWorkoutManager: UnifiedWorkoutManager, geoCodeHelper: GeoCodeHelper) {
+	  self.weatherKitManager = weatherKitManager
+	  self.unifiedWorkoutManager = unifiedWorkoutManager
+	  self.geoCodeHelper = geoCodeHelper
+   }
 
    // Mirror the configuration logic from ButtonView
    var orbConfig: OrbConfiguration {
 	  OrbConfiguration(
-		 backgroundColors: [.yellow, .green, .pink], // easter
+		 backgroundColors: [.gpBlue, .blue, .gpLtBlue], // easter
 		 glowColor: .white,
 		 coreGlowIntensity: 1.0, // or 0.25 for "down" state if you wish to add state
 		 showWavyBlobs: true,
@@ -24,6 +37,53 @@ struct WatchView: View {
 		 speed: 40
 	  )
    }
+
+   private var gradient: Gradient {
+	  Gradient(colors: [.gpBlue, .gpRed])
+   }
+
+   var weatherView: some View {
+	  VStack(spacing: 4) {
+		 HStack(alignment: .center, spacing: 4) {
+			if weatherKitManager.tempVar.isEmpty {
+			   // Show loading animation when no temperature
+			   ProgressView()
+				  .tint(.white)
+				  .scaleEffect(0.7)
+			} else {
+			   Image(systemName: weatherKitManager.symbolVar)
+				  .font(.system(size: 16))
+				  .foregroundColor(.white)
+				  .id(weatherKitManager.symbolVar)
+
+			   Text("\(weatherKitManager.tempVar)°")
+				  .font(.system(size: 16))
+				  .foregroundColor(.white)
+				  .id(weatherKitManager.tempVar)
+			}
+		 }
+		 .padding(.leading, -20)
+
+		 //MARK: min/max temperature display
+		 if !weatherKitManager.lowTempVar.isEmpty && !weatherKitManager.highTempVar.isEmpty {
+			HStack(spacing: 2) {
+			   Image(systemName: "thermometer")
+				  .font(.system(size: 12))
+				  .foregroundColor(.white.opacity(0.9))
+
+			   Text("\(weatherKitManager.lowTempVar)°/\(weatherKitManager.highTempVar)°")
+				  .font(.system(size: 14))
+				  .foregroundColor(.white.opacity(0.9))
+			}
+			.offset(y: -5)
+		 }
+	  }
+	  .padding(.vertical, 8)
+	  .background(Color.black.opacity(0.05))
+	  .cornerRadius(30)
+	  .offset(x: -30, y: -10)
+   }
+
 
    var body: some View {
 	  // MARK: Orb diameter follows (30% larger)
@@ -39,13 +99,14 @@ struct WatchView: View {
 	  let blackCircleHeight = screenBounds.height * blackWidth
 
 	  ZStack {
-		 VStack(alignment: .center, spacing: 0) {
+		 VStack(alignment: .leading, spacing: 0) {
+
 			ZStack {
 			   Circle()
 				  .fill(Color.white)
 				  .frame(width: orbFrameWidth, height: orbFrameHeight)
-				  .blur(radius: 43)
-				  .opacity(0.7)
+				  .blur(radius: 23)
+				  .opacity(0.5)
 			}
 			.overlay(
 			   OrbView(configuration: orbConfig)
@@ -56,32 +117,60 @@ struct WatchView: View {
 		 // Black center circle
 		 Circle()
 			.fill(
-			   RadialGradient(gradient: Gradient(colors: [.gpBlue, .clear]),
+			   RadialGradient(gradient: Gradient(colors: [.gpDark, .clear]),
 							  center: .center,
 							  startRadius: 0,
 							  endRadius: blackCircleWidth / 1.65)
-			).opacity(0.4)
+			).opacity(0.5)
 			.frame(width: blackCircleWidth, height: blackCircleHeight)
 			.shadow(color: .black.opacity(0.98), radius: 28, x: 0, y: 0)
 			.overlay(
 			   VStack(spacing: 0) {
 				  // MARK: - Hours:Minutes
 				  TimeHMLabel(date: currentTime)
-					 .font(.system(size: screenBounds.width * 0.45, weight: .thin, design: .rounded))
+					 .font(.custom("Rajdhani-SemiBold", size: screenBounds.width * 0.45))
 					 .foregroundColor(.white)
 					 .minimumScaleFactor(0.5)
 					 .lineLimit(1)
-					 .kerning(-2)
+					 .kerning(-1.5)
+					 .scaleEffect(x: 1.2, y: 1.7) // Makes time taller and skinnier
 					 .frame(maxWidth: .infinity)
 				  TimeSecLabel(date: currentTime)
 					 .frame(maxWidth: .infinity)
 			   }
 				  .frame(width: screenBounds.width * 0.58, height: screenBounds.height * 0.4, alignment: .center)
+				  .offset(y: 15)
 			)
+
+		 VStack(alignment: .leading) {
+			Spacer()
+			weatherView
+		 }
+		 .padding(.bottom, 45)
+		 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 	  }
 	  .frame(width: screenBounds.width, height: screenBounds.height, alignment: .center)
 	  .background(Color.black.ignoresSafeArea())
 	  .onReceive(timer) { currentTime = $0 }
+	  .onAppear {
+		 // Start weather tracking immediately
+		 isLoading = true
+		 weatherKitManager.startWeatherTracking()
+		 locationManager.requestWhenInUseAuthorization()
+
+		 // Set loading to false after a delay if we get data
+		 Task {
+			if let lastLoc = unifiedWorkoutManager.lastLocation?.coordinate {
+			   await weatherKitManager.getWeather(for: lastLoc)
+			} else if let currentLoc = locationManager.location?.coordinate {
+			   await weatherKitManager.getWeather(for: currentLoc)
+			}
+			isLoading = false
+		 }
+	  }
+	  .onDisappear {
+		 weatherKitManager.stopWeatherTracking()
+	  }
    }
 }
 
@@ -119,21 +208,20 @@ struct TimeSecLabel: View {
 	  HStack(alignment: .firstTextBaseline, spacing: 2) {
 		 // MARK: SECONDS
 		 Text(Self.secFormatter.string(from: date))
-			.font(.system(size: 34, weight: .thin, design: .rounded))
+			.font(.custom("Rajdhani-Light", size: 60))
 			.foregroundColor(.white)
-			.kerning(-1.5)
+			.kerning(-2)
 			.lineLimit(1)
-			.minimumScaleFactor(0.16)
+			.minimumScaleFactor(0.75)
 			.padding(.leading)
-		 //			.offset(x: 20)
-		 //MARK: AM/PM
+		 // MARK: AM/PM
 		 Text(Self.ampmFormatter.string(from: date))
-			.font(.system(size: 14, weight: .light, design: .rounded))
+			.font(.system(size: 13, weight: .light, design: .rounded))
 			.foregroundColor(.white.opacity(0.86))
-			.baselineOffset(16)
+			.baselineOffset(20)
 	  }
 	  .frame(maxWidth: .infinity, alignment: .center)
-	  .offset(x: 32, y: -15)
+	  .offset(x: 40, y: -16)
    }
 }
 
@@ -143,8 +231,12 @@ struct TimeSecLabel: View {
 
 struct WatchView_Previews: PreviewProvider {
    static var previews: some View {
-	  WatchView()
-		 .frame(width: 320, height: 320)
-		 .previewLayout(.sizeThatFits)
+	  WatchView(
+		 weatherKitManager: WeatherKitManager(),
+		 unifiedWorkoutManager: UnifiedWorkoutManager(),
+		 geoCodeHelper: GeoCodeHelper()
+	  )
+	  .frame(width: 320, height: 320)
+	  .previewLayout(.sizeThatFits)
    }
 }

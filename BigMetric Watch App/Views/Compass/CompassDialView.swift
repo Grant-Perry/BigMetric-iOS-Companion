@@ -11,23 +11,28 @@ struct CompassDialView: View {
 		 let size = min(geo.size.width, geo.size.height)
 		 let tickRadius = size * 0.48
 		 let cardinalRadius = size * 0.42
+		 let tickMarksOn = true
 
 		 ZStack {
 			// Tick marks
-			ForEach(0..<60, id: \.self) { tick in
-			   let isCardinal = tick % 15 == 0
-			   Rectangle()
-				  .fill(isCardinal ? Color.white : Color.gray.opacity(0.5))
-				  .frame(width: isCardinal ? 2 : 1,
-						 height: isCardinal ? 12 : 6)
-				  .offset(y: -tickRadius)
-				  .rotationEffect(.degrees(Double(tick) * 6))
+			if tickMarksOn {
+			   Group {
+			      ForEach(0..<60, id: \.self) { tick in
+					 let isCardinal = tick % 15 == 0
+					 Rectangle()
+						.fill(isCardinal ? Color.white : Color.gray.opacity(0.5))
+						.frame(width: isCardinal ? 2 : 1,
+							   height: isCardinal ? 12 : 6)
+						.offset(y: -tickRadius)
+						.rotationEffect(.degrees(Double(tick) * 6))
+				  }
+			   }
 			}
 
 			// Cardinal labels
 			ForEach(CardinalDirection.allPrimary, id: \.self) { direction in
 			   Text(direction.rawValue)
-				  .font(.system(size: 20, weight: .bold))
+				  .font(.system(size: 18, weight: .bold))
 				  .foregroundColor(.white)
 				  .shadow(radius: 1)
 				  .position(
@@ -37,6 +42,7 @@ struct CompassDialView: View {
 			}
 		 }
 		 .frame(width: size, height: size)
+		 .scaleEffect(1.1)
 	  }
    }
 }
