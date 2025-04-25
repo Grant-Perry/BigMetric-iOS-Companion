@@ -14,6 +14,12 @@ struct DigitalCompassView: View {
    @StateObject private var altitudeManager = AltitudeManager()
    @State private var rotateBGMode: Bool = false
 
+   private var isNearCardinal: Bool {
+	  let heading = digitalCompassViewModel.headingDegrees.truncatingRemainder(dividingBy: 360)
+	  let cardinalPoints = [0, 90, 180, 270]
+	  return cardinalPoints.contains { abs(heading - Double($0)).truncatingRemainder(dividingBy: 360) <= 5 }
+   }
+
    var body: some View {
 	  ZStack {
 		 YellowBoxArcView(heading: digitalCompassViewModel.headingDegrees, rotateBGMode: rotateBGMode)
@@ -30,11 +36,12 @@ struct DigitalCompassView: View {
 			   .frame(width: 110, height: 110)
 			   .foregroundColor(.green)
 			   .opacity(0.95)
-			   .scaleEffect(1.05) // size of greenArrow
+			   .scaleEffect(1.05)
 			   .shadow(color: .gpDark, radius: 10)
 
 			Text(CardinalDirection.closestDirection(to: digitalCompassViewModel.headingDegrees).rawValue)
-			   .font(.custom("Rajdhani-Regular", size:30))			   .foregroundColor(.white)
+			   .font(.custom("Rajdhani-Regular", size:30))
+			   .foregroundColor(.white)
 			   .bold()
 			   .shadow(radius: 5)
 			   .padding(8)
@@ -45,7 +52,7 @@ struct DigitalCompassView: View {
 			Spacer()
 			VStack(spacing: 2) {
 			   HStack {
-				  Image(systemName: "mountain.2.circle")
+				  Image("Altitude")
 					 .font(.system(.caption))
 					 .foregroundColor(.white)
 				  Spacer()
@@ -104,6 +111,6 @@ struct DigitalCompassView: View {
 
 #Preview("East") {
    let viewModel = DigitalCompassViewModel.preview
-   viewModel.setHeading(325) // East
+   viewModel.setHeading(270) // East
    return DigitalCompassView(digitalCompassViewModel: viewModel)
 }

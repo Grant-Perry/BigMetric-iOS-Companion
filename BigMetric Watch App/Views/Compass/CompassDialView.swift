@@ -6,6 +6,11 @@ struct CompassDialView: View {
    var heading: Double  = 180
    // 0-360 degrees
 
+   private func isNearThisCardinal(_ direction: CardinalDirection) -> Bool {
+	  let normalizedHeading = heading.truncatingRemainder(dividingBy: 360)
+	  return abs(normalizedHeading - direction.angle).truncatingRemainder(dividingBy: 360) <= 5
+   }
+
    var body: some View {
 	  GeometryReader { geo in
 		 let size = min(geo.size.width, geo.size.height)
@@ -17,7 +22,7 @@ struct CompassDialView: View {
 			// Tick marks
 			if tickMarksOn {
 			   Group {
-			      ForEach(0..<60, id: \.self) { tick in
+				  ForEach(0..<60, id: \.self) { tick in
 					 let isCardinal = tick % 15 == 0
 					 Rectangle()
 						.fill(isCardinal ? Color.white : Color.gray.opacity(0.5))
@@ -31,10 +36,12 @@ struct CompassDialView: View {
 
 			// Cardinal labels NESW - N, E, S, W
 			ForEach(CardinalDirection.allPrimary, id: \.self) { direction in
+			   let isNear = isNearThisCardinal(direction)
 			   Text(direction.rawValue)
-				  .font(.system(size: 18, weight: .bold))
-				  .foregroundColor(.gpYellow)
+				  .font(.system(size: isNear ? 38 : 18, weight: .bold))
+				  .foregroundColor(isNear ? .gpRed : .gpYellow)
 				  .shadow(radius: 1)
+				  .animation(.easeInOut(duration: 0.3), value: isNear)
 				  .position(
 					 x: geo.size.width / 2 + CGFloat(sin(direction.angle * .pi / 180)) * cardinalRadius,
 					 y: geo.size.height / 2 - CGFloat(cos(direction.angle * .pi / 180)) * cardinalRadius
