@@ -16,6 +16,7 @@ final class DigitalCompassViewModel: NSObject, CLLocationManagerDelegate {
    private(set) var headingDegrees: Double = 0.0
    private(set) var cardinalDirection: String = "N"
    private(set) var coordinate: CLLocationCoordinate2D?
+   private(set) var currentLocation: CLLocation?
    private(set) var locationName: String = "Unknown"
 
    // MARK: - Private
@@ -66,6 +67,7 @@ final class DigitalCompassViewModel: NSObject, CLLocationManagerDelegate {
    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
 	  guard let latest = locations.last else { return }
 	  coordinate = latest.coordinate
+	  currentLocation = latest
    }
 
    func locationManagerShouldDisplayHeadingCalibration(_ manager: CLLocationManager) -> Bool {
@@ -76,7 +78,9 @@ final class DigitalCompassViewModel: NSObject, CLLocationManagerDelegate {
 
    static var preview: DigitalCompassViewModel {
 	  let vm = DigitalCompassViewModel()
-	  vm.coordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+	  let location = CLLocation(latitude: 37.7749, longitude: -122.4194)
+	  vm.coordinate = location.coordinate
+	  vm.currentLocation = location
 	  vm.locationName = "San Francisco"
 	  return vm
    }

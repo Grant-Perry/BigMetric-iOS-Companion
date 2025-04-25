@@ -11,55 +11,70 @@ import SwiftUI
 struct DigitalCompassView: View {
    @State var digitalCompassViewModel: DigitalCompassViewModel
    @StateObject private var weatherKitManager = WeatherKitManager()
+   @StateObject private var altitudeManager = AltitudeManager()
    @State private var rotateBGMode: Bool = false
-   
+
    var body: some View {
 	  ZStack {
 		 YellowBoxArcView(heading: digitalCompassViewModel.headingDegrees, rotateBGMode: rotateBGMode)
 			.frame(width: 184, height: 184)
-		 
-		 // CompassDialView rotates in State 2
+
 		 CompassDialView(heading: digitalCompassViewModel.headingDegrees)
 			.frame(width: 184, height: 184)
 			.rotationEffect(.degrees(rotateBGMode ? -digitalCompassViewModel.headingDegrees : 0))
-		 
-		 // Green arrow stays fixed in State 2
+
 		 ZStack {
 			Image("greenArrow")
 			   .resizable()
 			   .scaledToFit()
-			   .frame(width: 50, height: 110)
+			   .frame(width: 110, height: 110)
 			   .foregroundColor(.green)
 			   .opacity(0.95)
-			   .scaleEffect(1.2)
-			
+			   .scaleEffect(1.05) // size of greenArrow
+			   .shadow(color: .gpDark, radius: 10)
+
 			Text(CardinalDirection.closestDirection(to: digitalCompassViewModel.headingDegrees).rawValue)
-			   .font(.subheadline)
-			   .foregroundColor(.white)
+			   .font(.custom("Rajdhani-Regular", size:30))			   .foregroundColor(.white)
 			   .bold()
-			   .shadow(radius: 15)
+			   .shadow(radius: 5)
 			   .padding(8)
 		 }
 		 .rotationEffect(.degrees(rotateBGMode ? 0 : digitalCompassViewModel.headingDegrees))
-		 // Apply animation at this level for both arrow and boxes
-		 .animation(.linear(duration: 0.1), value: digitalCompassViewModel.headingDegrees)
-		 
-		 CompassCenterDisplayView(
-			headingDegrees: digitalCompassViewModel.headingDegrees,
-			cardinal: digitalCompassViewModel.cardinalDirection,
-			coordinate: digitalCompassViewModel.coordinate,
-			locationName: weatherKitManager.locationName
-		 )
+
+		 VStack {
+			Spacer()
+			VStack(spacing: 2) {
+			   HStack {
+				  Image(systemName: "mountain.2.circle")
+					 .font(.system(.caption))
+					 .foregroundColor(.white)
+				  Spacer()
+				  Image(systemName: "safari")
+					 .font(.system(.caption))
+					 .foregroundColor(.white)
+			   }
+			   HStack {
+				  Text(altitudeManager.altitudeString)
+					 .font(.system(.title3, design: .monospaced))
+					 .foregroundColor(.white)
+				  Spacer()
+				  Text(String(format: "%.0f°", digitalCompassViewModel.headingDegrees))
+					 .font(.system(.title3, design: .monospaced))
+					 .foregroundColor(.white)
+			   }
+			}
+			.padding(.horizontal)
+			.offset(y: 13)
+		 }
 	  }
 	  .frame(maxWidth: .infinity, maxHeight: .infinity)
 	  .background(Color.black)
 	  .onTapGesture(count: 2) {
-		 withAnimation(.easeInOut(duration: 0.3)) {
-			rotateBGMode.toggle()
-		 }
+		 rotateBGMode.toggle()
 	  }
 	  .onAppear {
 		 digitalCompassViewModel.start()
+		 altitudeManager.startUpdates()
 		 if let coordinate = digitalCompassViewModel.coordinate {
 			Task {
 			   await weatherKitManager.getWeather(for: coordinate)
@@ -68,6 +83,7 @@ struct DigitalCompassView: View {
 	  }
 	  .onDisappear {
 		 digitalCompassViewModel.stop()
+		 altitudeManager.stopUpdates()
 	  }
 	  .onChange(of: digitalCompassViewModel.coordinate?.latitude) { _, _ in
 		 if let coordinate = digitalCompassViewModel.coordinate {
@@ -88,6 +104,6 @@ struct DigitalCompassView: View {
 
 #Preview("East") {
    let viewModel = DigitalCompassViewModel.preview
-   viewModel.setHeading(90) // East
+   viewModel.setHeading(325) // East
    return DigitalCompassView(digitalCompassViewModel: viewModel)
 }

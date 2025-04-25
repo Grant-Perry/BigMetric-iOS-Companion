@@ -6,7 +6,8 @@ import Foundation
 struct YellowOnBoxes: View {
    let heading: Double
    let boxCount: Int = 60
-   let boxSize: CGFloat = 6
+   let boxWidth: CGFloat = 6
+   let boxHeight: CGFloat = 6
    let ringScale: CGFloat = 1.1
 
    private var angleStep: Double { 360.0 / Double(boxCount) }
@@ -26,7 +27,7 @@ struct YellowOnBoxes: View {
 	  GeometryReader { geo in
 		 let size = min(geo.size.width, geo.size.height)
 		 let baseR = size * 0.45
-		 let rCenter = baseR + boxSize/2
+		 let rCenter = baseR + boxWidth/2
 
 		 ZStack {
 			// Rotating illuminated pattern
@@ -34,7 +35,7 @@ struct YellowOnBoxes: View {
 			   // Center box
 			   Rectangle()
 				  .fill(boxGradient)
-				  .frame(width: boxSize, height: boxSize)
+				  .frame(width: boxWidth, height: boxHeight)
 				  .offset(
 					 x: rCenter * CGFloat(cos(Double(0))),
 					 y: rCenter * CGFloat(sin(Double(0)))
@@ -44,7 +45,7 @@ struct YellowOnBoxes: View {
 			   ForEach([-1, 1], id: \.self) { offset in
 				  Rectangle()
 					 .fill(boxGradient)
-					 .frame(width: boxSize, height: boxSize)
+					 .frame(width: boxWidth, height: boxHeight)
 					 .offset(
 						x: rCenter * CGFloat(cos(Double(offset) * angleStep * .pi/180)),
 						y: rCenter * CGFloat(sin(Double(offset) * angleStep * .pi/180))
@@ -56,7 +57,7 @@ struct YellowOnBoxes: View {
 			   ForEach([-2, 2], id: \.self) { offset in
 				  Rectangle()
 					 .fill(boxGradient)
-					 .frame(width: boxSize, height: boxSize)
+					 .frame(width: boxWidth, height: boxHeight)
 					 .offset(
 						x: rCenter * CGFloat(cos(Double(offset) * angleStep * .pi/180)),
 						y: rCenter * CGFloat(sin(Double(offset) * angleStep * .pi/180))
@@ -64,9 +65,14 @@ struct YellowOnBoxes: View {
 					 .opacity(0.3)
 			   }
 			}
+			.scaleEffect(1.1)
 			.rotationEffect(.degrees(-90))
 			.rotationEffect(.degrees(heading))
 		 }
 	  }
    }
+}
+
+#Preview {
+   YellowOnBoxes(heading: 90)
 }

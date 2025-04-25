@@ -28,14 +28,6 @@ struct showAllWeather: View {
 
    var body: some View {
 	  VStack(spacing: 4) {
-		 //		 Text(weatherKitManager.locationName.isEmpty ? "" : weatherKitManager.locationName)
-		 //			.frame(maxWidth: .infinity)
-		 //			.lineLimit(1)
-		 //			.minimumScaleFactor(0.75)
-		 //			.scaledToFit()
-		 //			.foregroundColor(.white)
-		 //			.font(.system(size: 14, weight: .medium))
-
 		 todaysWeather()
 			.onAppear {
 			   // Get city name for both local display and weatherKitManager

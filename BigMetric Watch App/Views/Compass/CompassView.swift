@@ -80,17 +80,6 @@ struct CompassView: View {
 		 compassManager.stopUpdates()
 	  }
    }
-
-   //   private func logAndPersist(_ message: String) {
-   //	  let timestamp = ISO8601DateFormatter().string(from: Date())
-   //	  let entry = "[\(timestamp)] \(message)"
-   //	  var logs = UserDefaults.standard.stringArray(forKey: "logHistory") ?? []
-   //	  logs.append(entry)
-   //	  UserDefaults.standard.set(Array(logs.suffix(250)), forKey: "logHistory")
-   //#if DEBUG
-   //	  print(message)
-   //#endif
-   //   }
 }
 
 #Preview {

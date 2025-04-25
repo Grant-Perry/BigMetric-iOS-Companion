@@ -5,19 +5,20 @@ import Orb
 struct YellowBoxArcView: View {
    let heading: Double
    let rotateBGMode: Bool
+   let orbMagnifier = 0.76  // size of the orb
 
-   let orbMagnifier = 0.8
 
    var orbConfig: OrbConfiguration {
 	  OrbConfiguration(
-		 backgroundColors: [.yellow, .green, .pink],
-		 glowColor: .white,
+		 backgroundColors: [.yellow, .green, .pink], // easter
+//		 backgroundColors: [.gpBlue, .gpLtBlue, .gpGreen],
+		 glowColor: .gpLtBlue,
 		 coreGlowIntensity: 1.0,
 		 showWavyBlobs: true,
 		 showParticles: true,
 		 showGlowEffects: true,
 		 showShadow: true,
-		 speed: 40
+		 speed: 25
 	  )
    }
 
@@ -30,7 +31,8 @@ struct YellowBoxArcView: View {
 			   .fill(Color.white)
 			   .frame(width: size * orbMagnifier, height: size * orbMagnifier)
 			   .blur(radius: 23)
-			   .opacity(0.47)
+			   .opacity(0.25)
+
 
 			OrbView(configuration: orbConfig)
 			   .aspectRatio(1, contentMode: .fit)
@@ -39,7 +41,7 @@ struct YellowBoxArcView: View {
 			CompassYellowRing(heading: heading, rotateBGMode: rotateBGMode)
 			   .frame(width: size, height: size)
 		 }
-		 .scaleEffect(1.05)
+		 .scaleEffect(1.08)
 		 .frame(width: geo.size.width, height: geo.size.height)
 	  }
    }

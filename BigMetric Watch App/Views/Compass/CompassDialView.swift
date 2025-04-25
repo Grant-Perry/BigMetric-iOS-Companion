@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Displays the rotating compass dial with tick marks and cardinal direction labels.
-/// The red North pointer should remain static in the parent view.
+/// Displays the rotating compass dial with tick marks and cardinal NESW
+///  direction labels.
 struct CompassDialView: View {
    var heading: Double  = 180
    // 0-360 degrees
@@ -29,11 +29,11 @@ struct CompassDialView: View {
 			   }
 			}
 
-			// Cardinal labels
+			// Cardinal labels NESW - N, E, S, W
 			ForEach(CardinalDirection.allPrimary, id: \.self) { direction in
 			   Text(direction.rawValue)
 				  .font(.system(size: 18, weight: .bold))
-				  .foregroundColor(.white)
+				  .foregroundColor(.gpYellow)
 				  .shadow(radius: 1)
 				  .position(
 					 x: geo.size.width / 2 + CGFloat(sin(direction.angle * .pi / 180)) * cardinalRadius,
