@@ -13,6 +13,7 @@ struct DigitalCompassView: View {
    @StateObject private var weatherKitManager = WeatherKitManager()
    @StateObject private var altitudeManager = AltitudeManager()
    @State private var rotateBGMode: Bool = false
+   @State private var hasLoadedWeather = false // Track if we've loaded weather
 
    private var isNearCardinal: Bool {
 	  let heading = digitalCompassViewModel.headingDegrees.truncatingRemainder(dividingBy: 360)
@@ -82,28 +83,18 @@ struct DigitalCompassView: View {
 	  .onAppear {
 		 digitalCompassViewModel.start()
 		 altitudeManager.startUpdates()
-		 if let coordinate = digitalCompassViewModel.coordinate {
-			Task {
-			   await weatherKitManager.getWeather(for: coordinate)
-			}
-		 }
 	  }
 	  .onDisappear {
 		 digitalCompassViewModel.stop()
 		 altitudeManager.stopUpdates()
 	  }
-	  .onChange(of: digitalCompassViewModel.coordinate?.latitude) { _, _ in
-		 if let coordinate = digitalCompassViewModel.coordinate {
-			Task {
-			   await weatherKitManager.getWeather(for: coordinate)
-			}
-		 }
-	  }
-	  .onChange(of: digitalCompassViewModel.coordinate?.longitude) { _, _ in
-		 if let coordinate = digitalCompassViewModel.coordinate {
-			Task {
-			   await weatherKitManager.getWeather(for: coordinate)
-			}
+	  .onChange(of: digitalCompassViewModel.currentLocation) { _, newLocation in
+		 guard !hasLoadedWeather,
+				  let location = newLocation else { return }
+
+		 hasLoadedWeather = true
+		 Task {
+			await weatherKitManager.getWeather(for: location.coordinate)
 		 }
 	  }
    }
@@ -111,6 +102,6 @@ struct DigitalCompassView: View {
 
 #Preview("East") {
    let viewModel = DigitalCompassViewModel.preview
-   viewModel.setHeading(270) // East
+   viewModel.setHeading(280) // East
    return DigitalCompassView(digitalCompassViewModel: viewModel)
 }

@@ -42,9 +42,9 @@ struct RootBigMetricView: View {
 		 .tabItem { Image(systemName: "circle.fill") }
 		 .tag(4)
 
-//		 CompassView()
-//			.tabItem { Image(systemName: "circle.fill") }
-//			.tag(5)
+		 //		 CompassView()
+		 //			.tabItem { Image(systemName: "circle.fill") }
+		 //			.tag(5)
 
 		 // CHANGE: Add viewModel parameter
 		 DigitalCompassView(digitalCompassViewModel: digitalCompassViewModel)
