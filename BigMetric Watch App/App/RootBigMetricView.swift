@@ -26,7 +26,7 @@ struct RootBigMetricView: View {
 		 .tabItem { Image(systemName: "circle.fill") }
 		 .tag(2)
 
-		 debugScreen(
+		 SettingsView(
 			unifiedWorkoutManager: unifiedWorkoutManager,
 			weatherKitManager: weatherKitManager,
 			geoCodeHelper: geoCodeHelper

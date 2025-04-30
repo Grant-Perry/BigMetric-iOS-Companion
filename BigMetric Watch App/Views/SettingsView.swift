@@ -1,18 +1,9 @@
-//
-//  debugScreen.swift
-//  howFar Watch App
-//
-//  Reorganized so Weather is at the top, toggles and activity selectors at the bottom.
-//  Now updated to have a swoosh .gpDeltaPurple background.
-//  Uses showAllWeather + WeatherStatsView with a sheet, same as before.
-//  No disclaimers, entire forklift code.
-//
-
 import SwiftUI
 import CoreLocation
 import HealthKit
+import Orb
 
-struct debugScreen: View {
+struct SettingsView: View {
    
    /// The final unified manager
    @State var unifiedWorkoutManager: UnifiedWorkoutManager
@@ -22,6 +13,8 @@ struct debugScreen: View {
    @State var geoCodeHelper: GeoCodeHelper
    
    @State private var showWeatherStatsView = false
+   
+   @Environment(MyOrbViewModel.self) private var myOrbViewModel
    
    var body: some View {
 	  ZStack {
@@ -103,6 +96,85 @@ struct debugScreen: View {
 				  .padding()
 				  .background(Color.white.opacity(0.15))
 				  .cornerRadius(15)
+			   }
+			   .padding(.horizontal)
+			   
+			   // Orb Color Picker Section
+			   VStack(alignment: .leading, spacing: 12) {
+				  Text("Customize Orb Colors")
+					 .font(.system(size: 20, weight: .semibold))
+					 .foregroundColor(.white)
+					 .padding(.horizontal)
+				  
+				  // Color swatch grid - updated to include all gp colors, no shadow/overlay, 15x15 px max
+				  let availableColors: [Color] = [
+					 .gpWhite, .gpBlue, .gpDark, .gpLtBlue, .gpGreen, .gpMinty,
+					 .gpOrange, .gpPink, .gpPurple, .gpRed, .gpRedPink, .gpBrown,
+					 .gpGold, .gpYellow, .gpDeltaPurple, .gpElectricTeal, .gpCoral, .gpSand
+				  ]
+				  LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 6), spacing: 2) {
+					 ForEach(availableColors, id: \.self) { color in
+						Button(action: {
+						   myOrbViewModel.updateNextColor(to: color)
+						}) {
+						   Rectangle()
+							  .fill(color)
+							  .frame(width: 15, height: 15)
+						}
+						.buttonStyle(.plain)
+					 }
+				  }
+				  
+				  HStack(alignment: .top, spacing: 12) {
+					 OrbView(configuration: OrbConfiguration(
+						backgroundColors: [
+						   myOrbViewModel.orbColor1,
+						   myOrbViewModel.orbColor2,
+						   myOrbViewModel.orbColor3
+						],
+						glowColor: .white,
+						coreGlowIntensity: 1.0,
+						showWavyBlobs: true,
+						showParticles: true,
+						showGlowEffects: true,
+						showShadow: true,
+						speed: 40
+					 ))
+					 .aspectRatio(1, contentMode: .fit)
+					 .frame(width: 80, height: 80)
+					 
+					 VStack(alignment: .leading, spacing: 6) {
+						ForEach(0..<3, id: \.self) { index in
+						   Button(action: {
+							  myOrbViewModel.colorIndex = index
+						   }) {
+							  HStack(spacing: 8) {
+								 Text("Color \(index + 1):")
+									.font(.caption)
+									.foregroundColor(.white)
+								 
+								 Rectangle()
+									.fill(index == 0 ? myOrbViewModel.orbColor1 :
+											 index == 1 ? myOrbViewModel.orbColor2 :
+											 myOrbViewModel.orbColor3)
+									.frame(width: 18, height: 18)
+									.overlay(
+									   RoundedRectangle(cornerRadius: 3)
+										  .stroke(index == myOrbViewModel.colorIndex ? Color.white : Color.clear, lineWidth: 2)
+									)
+							  }
+						   }
+						   .buttonStyle(.plain)
+						}
+					 }
+				  }
+				  
+				  Button("Reset to Default Colors") {
+					 myOrbViewModel.resetToDefaultColors()
+				  }
+				  .buttonStyle(.borderedProminent)
+				  .tint(.yellow)
+				  .padding(.horizontal)
 			   }
 			   .padding(.horizontal)
 			   

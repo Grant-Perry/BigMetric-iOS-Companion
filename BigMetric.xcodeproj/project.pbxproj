@@ -10,6 +10,7 @@
 		9B109A042D95F4EE009027E9 /* BigMetric Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9B2A01542DB2A8360064CD9C /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B2A01532DB2A8360064CD9C /* Orb */; };
 		9B2A01562DB3F20A0064CD9C /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 9B2A01552DB3F1F30064CD9C /* .gitignore */; };
+		9B71E3AA2DC25C03007C35EA /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B71E3A92DC25C03007C35EA /* Orb */; };
 		9B9D6FC92DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B109AAF2D95FC5A009027E9 /* Orb */; };
 		9B9D6FCA2DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9BB243D12D9F411F00DBAC7D /* Orb */; };
 		9B9D6FCB2DAD9BA6004FBB10 /* Orb in Frameworks */ = {isa = PBXBuildFile; productRef = 9B72CDD12D9F6F1400AFECE0 /* Orb */; };
@@ -53,6 +54,7 @@
 		9BEF1E312D9D8AF80023FA37 /* Exceptions for "BigMetric" folder in "BigMetric Watch App" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Ext/Color+Ext.swift",
 				Ext/WeatherGradient.swift,
 			);
 			target = 9B109A022D95F4EE009027E9 /* BigMetric Watch App */;
@@ -112,6 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9B71E3AA2DC25C03007C35EA /* Orb in Frameworks */,
 				9BFD973F2DB1EE06001F7158 /* Orb in Frameworks */,
 				9B9D6FCC2DAD9BA6004FBB10 /* Orb in Frameworks */,
 				9BFD98352DB27894001F7158 /* Orb in Frameworks */,
@@ -199,6 +202,7 @@
 				9BFD973E2DB1EE06001F7158 /* Orb */,
 				9BFD98342DB27894001F7158 /* Orb */,
 				9B2A01532DB2A8360064CD9C /* Orb */,
+				9B71E3A92DC25C03007C35EA /* Orb */,
 			);
 			productName = "BigMetric Watch App";
 			productReference = 9B109A032D95F4EE009027E9 /* BigMetric Watch App.app */;
@@ -233,7 +237,7 @@
 			mainGroup = 9B1099ED2D95F4ED009027E9;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				9B2A01522DB2A8360064CD9C /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
+				9B71E3A82DC25C03007C35EA /* XCLocalSwiftPackageReference "BigMetric/Orb" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9B1099F72D95F4ED009027E9 /* Products */;
@@ -425,7 +429,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.79;
+				MARKETING_VERSION = 2.80;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -456,7 +460,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.79;
+				MARKETING_VERSION = 2.80;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -578,7 +582,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		9B2A01522DB2A8360064CD9C /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
+		9B71E3A82DC25C03007C35EA /* XCLocalSwiftPackageReference "BigMetric/Orb" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = BigMetric/Orb;
 		};
@@ -594,6 +598,10 @@
 			productName = Orb;
 		};
 		9B46E6842DA05CC2001AA5BD /* Orb */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Orb;
+		};
+		9B71E3A92DC25C03007C35EA /* Orb */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Orb;
 		};
