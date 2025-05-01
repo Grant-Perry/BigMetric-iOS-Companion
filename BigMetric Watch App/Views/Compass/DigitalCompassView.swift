@@ -15,22 +15,22 @@ struct DigitalCompassView: View {
    @StateObject private var altitudeManager = AltitudeManager()
    @State private var rotateBGMode: Bool = false
    @State private var hasLoadedWeather = false // Track if we've loaded weather
-   
+
    private var isNearCardinal: Bool {
 	  let heading = digitalCompassViewModel.headingDegrees.truncatingRemainder(dividingBy: 360)
 	  let cardinalPoints = [0, 90, 180, 270]
 	  return cardinalPoints.contains { abs(heading - Double($0)).truncatingRemainder(dividingBy: 360) <= 5 }
    }
-   
+
    var body: some View {
 	  ZStack {
 		 YellowBoxArcView(heading: digitalCompassViewModel.headingDegrees, rotateBGMode: rotateBGMode)
 			.frame(width: 184, height: 184)
-		 
+
 		 CompassDialView(heading: digitalCompassViewModel.headingDegrees)
 			.frame(width: 184, height: 184)
 			.rotationEffect(.degrees(rotateBGMode ? -digitalCompassViewModel.headingDegrees : 0))
-		 
+
 		 ZStack {
 			Image("greenArrow")
 			   .resizable()
@@ -40,7 +40,7 @@ struct DigitalCompassView: View {
 			   .opacity(0.95)
 			   .scaleEffect(1.05)
 			   .shadow(color: .gpDark, radius: 10)
-			
+
 			Text(CardinalDirection.closestDirection(to: digitalCompassViewModel.headingDegrees).rawValue)
 			   .font(.custom("Rajdhani-Regular", size:30))
 			   .foregroundColor(.white)
@@ -49,7 +49,7 @@ struct DigitalCompassView: View {
 			   .padding(8)
 		 }
 		 .rotationEffect(.degrees(rotateBGMode ? 0 : digitalCompassViewModel.headingDegrees))
-		 
+
 		 VStack {
 			Spacer()
 			VStack(spacing: 2) {
@@ -65,11 +65,15 @@ struct DigitalCompassView: View {
 			   HStack {
 				  Text(altitudeManager.altitudeString)
 					 .font(.system(.title3, design: .monospaced))
+					 .frame(maxWidth: .infinity)
+					 .lineLimit(1)
+					 .minimumScaleFactor(0.5)
+					 .scaledToFit()
 					 .foregroundColor(.white)
 				  Spacer()
 				  Text(String(format: "%.0f°", digitalCompassViewModel.headingDegrees))
 					 .font(.system(.title3, design: .monospaced))
-					 .foregroundColor(.white)
+					 .foregroundColor(myOrbViewModel.fontColor)
 			   }
 			}
 			.padding(.horizontal)
@@ -92,7 +96,7 @@ struct DigitalCompassView: View {
 	  .onChange(of: digitalCompassViewModel.currentLocation) { _, newLocation in
 		 guard !hasLoadedWeather,
 			   let location = newLocation else { return }
-		 
+
 		 hasLoadedWeather = true
 		 Task {
 			await weatherKitManager.getWeather(for: location.coordinate)

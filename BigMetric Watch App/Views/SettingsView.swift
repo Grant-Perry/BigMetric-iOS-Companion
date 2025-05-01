@@ -80,25 +80,6 @@ struct SettingsView: View {
 			   }
 			   .padding(.horizontal)
 			   
-			   // Activity Type with modern icon buttons
-			   VStack(alignment: .leading, spacing: 12) {
-				  Text("Activity Type")
-					 .font(.system(size: 20, weight: .semibold))
-					 .foregroundColor(.white)
-					 .padding(.horizontal)
-				  
-				  HStack(spacing: 20) {
-					 ForEach([ActivityTypeSetup.walk, .run, .bike]) { choice in
-						activityTypeButton(choice)
-						   .frame(maxWidth: .infinity)
-					 }
-				  }
-				  .padding()
-				  .background(Color.white.opacity(0.15))
-				  .cornerRadius(15)
-			   }
-			   .padding(.horizontal)
-			   
 			   // Orb Color Picker Section
 			   VStack(alignment: .leading, spacing: 12) {
 				  Text("Customize Orb Colors")
@@ -106,24 +87,41 @@ struct SettingsView: View {
 					 .foregroundColor(.white)
 					 .padding(.horizontal)
 				  
-				  // Color swatch grid - updated to include all gp colors, no shadow/overlay, 15x15 px max
+				  // Color swatch grid - updated to show all 18 colors in a 6x3 layout with padding
 				  let availableColors: [Color] = [
-					 .gpWhite, .gpBlue, .gpDark, .gpLtBlue, .gpGreen, .gpMinty,
-					 .gpOrange, .gpPink, .gpPurple, .gpRed, .gpRedPink, .gpBrown,
-					 .gpGold, .gpYellow, .gpDeltaPurple, .gpElectricTeal, .gpCoral, .gpSand
+					 .gpWhite,
+					 .gpBlue,
+					 .gpLtBlue,
+					 .gpPurple,
+					 .gpRed,
+					 .gpPink,
+					 .gpOrange,
+					 .gpRedPink,
+					 .gpCoral,
+					 .gpDeltaPurple,
+					 .gpForest,
+					 .gpGreen,
+					 .gpMinty,
+					 .gpBrown,
+					 .gpGold,
+					 .gpBrightYellow,
+					 .gpYellow,
+					 .gpBlack
 				  ]
-				  LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 6), spacing: 2) {
+				  // Updated: Explicit 6 columns, fixed height for 3 full rows
+				  LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 6), spacing: 6) {
 					 ForEach(availableColors, id: \.self) { color in
 						Button(action: {
 						   myOrbViewModel.updateNextColor(to: color)
 						}) {
 						   Rectangle()
 							  .fill(color)
-							  .frame(width: 15, height: 15)
+							  .frame(width: 20, height: 20)
 						}
 						.buttonStyle(.plain)
 					 }
 				  }
+				  .frame(height: 108)
 				  
 				  HStack(alignment: .top, spacing: 12) {
 					 OrbView(configuration: OrbConfiguration(
@@ -144,19 +142,34 @@ struct SettingsView: View {
 					 .frame(width: 80, height: 80)
 					 
 					 VStack(alignment: .leading, spacing: 6) {
-						ForEach(0..<3, id: \.self) { index in
+						ForEach(0..<4, id: \.self) { index in
 						   Button(action: {
 							  myOrbViewModel.colorIndex = index
 						   }) {
-							  HStack(spacing: 8) {
-								 Text("Color \(index + 1):")
-									.font(.caption)
-									.foregroundColor(.white)
+							  HStack(alignment: .center, spacing: 8) {
+								 let label = ["Top", "Mid", "Back", "Font"][index]
+								 let color: Color = {
+									switch index {
+									   case 0: return myOrbViewModel.orbColor1
+									   case 1: return myOrbViewModel.orbColor2
+									   case 2: return myOrbViewModel.orbColor3
+									   case 3: return myOrbViewModel.fontColor
+									   default: return .clear
+									}
+								 }()
+								 
+								 HStack(spacing: 0) {
+									Text(label)
+									   .font(.caption2)
+									   .foregroundColor(.white)
+									   .frame(width: 36, alignment: .trailing)
+									Text(":")
+									   .font(.caption2)
+									   .foregroundColor(.white)
+								 }
 								 
 								 Rectangle()
-									.fill(index == 0 ? myOrbViewModel.orbColor1 :
-											 index == 1 ? myOrbViewModel.orbColor2 :
-											 myOrbViewModel.orbColor3)
+									.fill(color)
 									.frame(width: 18, height: 18)
 									.overlay(
 									   RoundedRectangle(cornerRadius: 3)
@@ -175,6 +188,25 @@ struct SettingsView: View {
 				  .buttonStyle(.borderedProminent)
 				  .tint(.yellow)
 				  .padding(.horizontal)
+			   }
+			   .padding(.horizontal)
+			   
+			   // Activity Type with modern icon buttons
+			   VStack(alignment: .leading, spacing: 12) {
+				  Text("Activity Type")
+					 .font(.system(size: 20, weight: .semibold))
+					 .foregroundColor(.white)
+					 .padding(.horizontal)
+				  
+				  HStack(spacing: 20) {
+					 ForEach([ActivityTypeSetup.walk, .run, .bike]) { choice in
+						activityTypeButton(choice)
+						   .frame(maxWidth: .infinity)
+					 }
+				  }
+				  .padding()
+				  .background(Color.white.opacity(0.15))
+				  .cornerRadius(15)
 			   }
 			   .padding(.horizontal)
 			   

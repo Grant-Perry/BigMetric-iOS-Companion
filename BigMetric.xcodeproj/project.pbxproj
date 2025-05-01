@@ -216,7 +216,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1630;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					9B1099F52D95F4ED009027E9 = {
 						CreatedOnToolsVersion = 16.3;
@@ -328,6 +328,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = KP3ZH5K2SY;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -390,6 +391,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = KP3ZH5K2SY;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -429,7 +431,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.80;
+				MARKETING_VERSION = 2.81;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -460,7 +462,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.80;
+				MARKETING_VERSION = 2.81;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -497,7 +499,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.62;
+				MARKETING_VERSION = 2.81;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -535,7 +537,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.62;
+				MARKETING_VERSION = 2.81;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

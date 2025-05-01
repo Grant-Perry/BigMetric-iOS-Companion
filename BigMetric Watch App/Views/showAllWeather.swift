@@ -14,18 +14,18 @@ struct showAllWeather: View {
    var geoCodeHelper: GeoCodeHelper
    /// Replaces old distanceTracker => unifiedWorkoutManager
    var unifiedWorkoutManager: UnifiedWorkoutManager
-
+   
    @State private var address = ""
    private var gradient: Gradient {
 	  Gradient(colors: [.gpBlue, .gpRed])
    }
-
+   
    private let dateFormatter: DateFormatter = {
 	  let formatter = DateFormatter()
 	  formatter.dateFormat = "M/d"
 	  return formatter
    }()
-
+   
    var body: some View {
 	  VStack(spacing: 4) {
 		 todaysWeather()
@@ -45,12 +45,25 @@ struct showAllWeather: View {
 			}
 	  }
    }
-
+   
    func todaysWeather() -> some View {
 	  HStack(alignment: .center) {
+		 let temp = Double(weatherKitManager.tempVar)
+		 let low = Double(weatherKitManager.lowTempVar)
+		 let high = Double(weatherKitManager.highTempVar)
+		 
+		 let clampedTemp = temp ?? 0
+		 let tempRange: ClosedRange<Double> = {
+			if let low = low, let high = high, high > low {
+			   return low...high
+			} else {
+			   return 0...100
+			}
+		 }()
+		 
 		 Gauge(
-			value: Double(weatherKitManager.tempVar) ?? 0,
-			in: (Double(weatherKitManager.lowTempVar) ?? 0)...(Double(weatherKitManager.highTempVar) ?? 0),
+			value: clampedTemp,
+			in: tempRange,
 			label: { Text("Temp") },
 			currentValueLabel: { Text(weatherKitManager.tempVar) },
 			markedValueLabels: {}
@@ -63,7 +76,7 @@ struct showAllWeather: View {
 		 .foregroundColor(.white)
 		 .padding(.top, -4)
 		 .padding(.bottom, 5)
-
+		 
 		 VStack(alignment: .leading, spacing: 2) {
 			HStack(alignment: .center, spacing: 2) {
 			   let primaryTemp = unifiedWorkoutManager.hotColdFirst
@@ -73,28 +86,28 @@ struct showAllWeather: View {
 			   ? weatherKitManager.lowTempVar
 			   : weatherKitManager.highTempVar
 			   let fontSize: CGFloat = 16.0
-
+			   
 			   Image(systemName: weatherKitManager.symbolVar)
 				  .font(.system(size: fontSize))
 				  .foregroundColor(.white)
-
+			   
 			   Text("\(primaryTemp)°")
 				  .font(.system(size: fontSize))
 				  .foregroundColor(
 					 TemperatureColor.from(temperature: Double(primaryTemp) ?? 0)
 				  )
-
+			   
 			   Text("/")
 				  .font(.system(size: fontSize))
 				  .foregroundColor(.white)
-
+			   
 			   Text("\(secondTemp)°")
 				  .font(.system(size: fontSize))
 				  .foregroundColor(
 					 TemperatureColor.from(temperature: Double(secondTemp) ?? 0)
 				  )
 			}
-
+			
 			VStack(alignment: .leading, spacing: 0) {
 			   Text(address)
 				  .font(.system(size: 12))
