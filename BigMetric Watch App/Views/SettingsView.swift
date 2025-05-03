@@ -5,20 +5,14 @@ import Orb
 
 struct SettingsView: View {
    
-   /// The final unified manager
    @State var unifiedWorkoutManager: UnifiedWorkoutManager
-   
-   /// Weather references
    @State var weatherKitManager: WeatherKitManager
    @State var geoCodeHelper: GeoCodeHelper
-   
    @State private var showWeatherStatsView = false
-   
    @Environment(MyOrbViewModel.self) private var myOrbViewModel
    
    var body: some View {
 	  ZStack {
-		 /// The gpDeltaPurple gradient swoosh background
 		 LinearGradient(
 			gradient: Gradient(colors: [
 			   .purple.opacity(0.8),
@@ -30,36 +24,10 @@ struct SettingsView: View {
 		 )
 		 .ignoresSafeArea()
 		 
-		 /// The main form content
 		 ScrollView {
 			VStack(spacing: 16) {
-			   // CHANGE: Add frame and alignment for city name
-			   Text(weatherKitManager.locationName)
-				  .font(.callout.weight(.medium))
-				  .foregroundColor(.white)
-				  .padding(.top)
-				  .frame(maxWidth: .infinity, alignment: .leading)
-				  .padding(.horizontal)
 			   
-			   // Weather Section with modern card design
-			   VStack {
-				  Button(action: {
-					 showWeatherStatsView = true
-				  }) {
-					 showAllWeather(
-						weatherKitManager: weatherKitManager,
-						geoCodeHelper: geoCodeHelper,
-						unifiedWorkoutManager: unifiedWorkoutManager
-					 )
-					 .padding()
-					 .background(Color.white.opacity(0.15))
-					 .cornerRadius(15)
-				  }
-				  .buttonStyle(.plain)
-			   }
-			   .padding(.horizontal)
-			   
-			   // Debug Toggles with modern switch styling
+			   // Settings Section
 			   VStack(alignment: .leading, spacing: 12) {
 				  Text("Settings")
 					 .font(.system(size: 20, weight: .semibold))
@@ -87,28 +55,12 @@ struct SettingsView: View {
 					 .foregroundColor(.white)
 					 .padding(.horizontal)
 				  
-				  // Color swatch grid - updated to show all 18 colors in a 6x3 layout with padding
 				  let availableColors: [Color] = [
-					 .gpWhite,
-					 .gpBlue,
-					 .gpLtBlue,
-					 .gpPurple,
-					 .gpRed,
-					 .gpPink,
-					 .gpOrange,
-					 .gpRedPink,
-					 .gpCoral,
-					 .gpDeltaPurple,
-					 .gpForest,
-					 .gpGreen,
-					 .gpMinty,
-					 .gpBrown,
-					 .gpGold,
-					 .gpBrightYellow,
-					 .gpYellow,
-					 .gpBlack
+					 .gpWhite, .gpBlue, .gpLtBlue, .gpPurple, .gpRed, .gpPink,
+					 .gpOrange, .gpRedPink, .gpCoral, .gpDeltaPurple, .gpForest, .gpGreen,
+					 .gpMinty, .gpBrown, .gpGold, .gpBrightYellow, .gpYellow, .gpBlack
 				  ]
-				  // Updated: Explicit 6 columns, fixed height for 3 full rows
+				  
 				  LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 6), spacing: 6) {
 					 ForEach(availableColors, id: \.self) { color in
 						Button(action: {
@@ -123,6 +75,7 @@ struct SettingsView: View {
 				  }
 				  .frame(height: 108)
 				  
+				  // Orb and selection indicators
 				  HStack(alignment: .top, spacing: 12) {
 					 OrbView(configuration: OrbConfiguration(
 						backgroundColors: [
@@ -140,6 +93,10 @@ struct SettingsView: View {
 					 ))
 					 .aspectRatio(1, contentMode: .fit)
 					 .frame(width: 80, height: 80)
+					 .onLongPressGesture {
+						WKInterfaceDevice.current().play(.click)
+						myOrbViewModel.saveCurrentToNextFavorite()
+					 }
 					 
 					 VStack(alignment: .leading, spacing: 6) {
 						ForEach(0..<4, id: \.self) { index in
@@ -147,7 +104,6 @@ struct SettingsView: View {
 							  myOrbViewModel.colorIndex = index
 						   }) {
 							  HStack(alignment: .center, spacing: 8) {
-								 let label = ["Top", "Mid", "Back", "Font"][index]
 								 let color: Color = {
 									switch index {
 									   case 0: return myOrbViewModel.orbColor1
@@ -158,14 +114,20 @@ struct SettingsView: View {
 									}
 								 }()
 								 
-								 HStack(spacing: 0) {
-									Text(label)
+								 if index == 3 {
+									Text("Font:")
 									   .font(.caption2)
 									   .foregroundColor(.white)
 									   .frame(width: 36, alignment: .trailing)
-									Text(":")
-									   .font(.caption2)
-									   .foregroundColor(.white)
+								 } else if index == myOrbViewModel.colorIndex {
+									Image("greenArrow")
+									   .resizable()
+									   .scaledToFit()
+									   .rotationEffect(.degrees(90))
+									   .scaleEffect(0.9)
+									   .frame(width: 36, alignment: .trailing)
+								 } else {
+									Spacer().frame(width: 36)
 								 }
 								 
 								 Rectangle()
@@ -173,12 +135,58 @@ struct SettingsView: View {
 									.frame(width: 18, height: 18)
 									.overlay(
 									   RoundedRectangle(cornerRadius: 3)
-										  .stroke(index == myOrbViewModel.colorIndex ? Color.white : Color.clear, lineWidth: 2)
+										  .stroke(
+											 index == myOrbViewModel.colorIndex
+											 ? (
+												(index == 3 && color == .black) ? Color.white :
+												   (index == 3 && color == .white) ? Color.black :
+												   Color.white
+											 )
+											 : Color.clear,
+											 lineWidth: 2
+										  )
 									)
 							  }
+							  .frame(maxWidth: .infinity)
+							  .lineLimit(1)
+							  .minimumScaleFactor(0.5)
+							  .scaledToFit()
 						   }
 						   .buttonStyle(.plain)
 						}
+					 }
+				  }
+				  
+				  HStack(spacing: 12) {
+					 ForEach(0..<3) { index in
+						Button(action: {
+						   if let fav = myOrbViewModel.favorites[index],
+							  let top = Color.fromHex(fav.top),
+							  let mid = Color.fromHex(fav.mid),
+							  let back = Color.fromHex(fav.back) {
+							  withAnimation {
+								 myOrbViewModel.orbColor1 = top
+								 myOrbViewModel.orbColor2 = mid
+								 myOrbViewModel.orbColor3 = back
+							  }
+						   }
+						}) {
+						   if let fav = myOrbViewModel.favorites[index],
+							  let top = Color.fromHex(fav.top),
+							  let mid = Color.fromHex(fav.mid),
+							  let back = Color.fromHex(fav.back) {
+							  Image(systemName: "star.fill")
+								 .font(.system(size: 20))
+								 .foregroundStyle(
+									LinearGradient(colors: [top, mid, back], startPoint: .top, endPoint: .bottom)
+								 )
+						   } else {
+							  Image(systemName: "star")
+								 .font(.system(size: 20))
+								 .foregroundColor(.white.opacity(0.5))
+						   }
+						}
+						.buttonStyle(.plain)
 					 }
 				  }
 				  
@@ -191,7 +199,7 @@ struct SettingsView: View {
 			   }
 			   .padding(.horizontal)
 			   
-			   // Activity Type with modern icon buttons
+			   // Activity Type Section
 			   VStack(alignment: .leading, spacing: 12) {
 				  Text("Activity Type")
 					 .font(.system(size: 20, weight: .semibold))
@@ -210,11 +218,42 @@ struct SettingsView: View {
 			   }
 			   .padding(.horizontal)
 			   
-			   // Version info with modern styling
+			   // Version Info
 			   Text("\(AppConstants.appName) - ver: \(AppConstants.getVersion())")
 				  .font(.system(size: 14, weight: .medium))
 				  .foregroundColor(.white.opacity(0.8))
 				  .padding(.top, 8)
+			   
+			   // Weather Section
+			   VStack(alignment: .leading, spacing: 12) {
+				  Text("Weather")
+					 .font(.system(size: 20, weight: .semibold))
+					 .foregroundColor(.white)
+					 .padding(.horizontal)
+				  
+				  Text(weatherKitManager.locationName)
+					 .font(.callout.weight(.medium))
+					 .foregroundColor(.white)
+					 .frame(maxWidth: .infinity, alignment: .leading)
+					 .padding(.horizontal)
+				  
+				  VStack {
+					 Button(action: {
+						showWeatherStatsView = true
+					 }) {
+						showAllWeather(
+						   weatherKitManager: weatherKitManager,
+						   geoCodeHelper: geoCodeHelper,
+						   unifiedWorkoutManager: unifiedWorkoutManager
+						)
+						.padding()
+						.background(Color.white.opacity(0.15))
+						.cornerRadius(15)
+					 }
+					 .buttonStyle(.plain)
+				  }
+			   }
+			   .padding(.horizontal)
 			}
 			.padding(.vertical)
 		 }
@@ -244,7 +283,6 @@ struct SettingsView: View {
 	  }
    }
    
-   /// The row of SF Symbol buttons for .walk, .run, .bike
    private func activityTypeButton(_ choice: ActivityTypeSetup) -> some View {
 	  Button {
 		 unifiedWorkoutManager.activityTypeChoice = choice
