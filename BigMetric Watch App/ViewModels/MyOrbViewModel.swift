@@ -8,6 +8,17 @@ class MyOrbViewModel {
    var orbColor2: Color
    var orbColor3: Color
    var fontColor: Color
+   
+   struct OrbColorFavorite: Codable, Equatable {
+	  let top: String
+	  let mid: String
+	  let back: String
+   }
+   
+   var favorites: [OrbColorFavorite?] = [nil, nil, nil]
+   private var nextFavoriteSlot: Int {
+	  favorites.firstIndex(where: { $0 == nil }) ?? 0
+   }
    var colorIndex = 0
    
    init() {
@@ -38,6 +49,10 @@ class MyOrbViewModel {
 		 orbColor2 = c2 ?? .blue
 		 orbColor3 = c3 ?? .pink
 		 fontColor = cFont ?? .white
+	  }
+	  if let data = UserDefaults.standard.data(forKey: "orbColorFavorites"),
+		 let decoded = try? JSONDecoder().decode([OrbColorFavorite?].self, from: data) {
+		 favorites = decoded
 	  }
    }
    
@@ -94,6 +109,22 @@ class MyOrbViewModel {
 	  //	  setColor(.yellow, for: 0)
 	  //	  setColor(.green, for: 1)
 	  //	  setColor(.pink, for: 2)
+   }
+   
+   private func persistFavorites() {
+	  if let encoded = try? JSONEncoder().encode(favorites) {
+		 UserDefaults.standard.set(encoded, forKey: "orbColorFavorites")
+	  }
+   }
+   
+   func saveCurrentToNextFavorite() {
+	  let newFavorite = OrbColorFavorite(
+		 top: orbColor1.toHex() ?? "#00FF00",
+		 mid: orbColor2.toHex() ?? "#0000FF",
+		 back: orbColor3.toHex() ?? "#FFC0CB"
+	  )
+	  favorites[nextFavoriteSlot] = newFavorite
+	  persistFavorites()
    }
    
    private static func loadColor(forKey key: String) -> Color? {
