@@ -10,11 +10,11 @@ struct howFarGPS: View {
 #else
    @State var screenBounds = UIScreen.main.bounds
 #endif
-   
-   @Environment(\.colorScheme) var colorScheme
-   
+
+   //   @Environment(\.colorScheme) var colorScheme
+
    @ObservedObject var unifiedWorkoutManager: UnifiedWorkoutManager
-   
+
    @State var debug            = false
    @State var resetDist        = false
    @State var isAuthorized     = false
@@ -22,7 +22,7 @@ struct howFarGPS: View {
    @State var debugStr         = ""
    @State var gpsLoc           = "GPS"
    @State var selectedDistance = "Miles"
-   
+
    // MARK: - Colors
    @State var gradStopColor      = Color(#colorLiteral(red: 0.1411764771, green: 0.3960784376, blue: 0.5647059083, alpha: 1))
    @State var bgYardsStopTop      = Color(#colorLiteral(red: 0.7450980544, green: 0.1568627506, blue: 0.07450980693, alpha: 1))
@@ -41,11 +41,11 @@ struct howFarGPS: View {
    @State var isUpdatingOff      = Color( #colorLiteral(red: 0.9254902005, green: 0.2352941185, blue: 0.1019607857, alpha: 1))
    @State var isUpdatingOffStop  = Color( #colorLiteral(red: 0.9260191787, green: 0.1247814497, blue: 0.4070666561, alpha: 1))
    @State var isRecordingColor   = Color( #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1))
-   
+
    var timePadding = 70.0
    var width       = 30.0
    var height      = 30.0
-   
+
    /// Computed
    var isUp: Bool {
 	  unifiedWorkoutManager.workoutState == .running
@@ -56,18 +56,18 @@ struct howFarGPS: View {
    var isPaused: Bool {
 	  unifiedWorkoutManager.workoutState == .paused
    }
-   
+
    @State private var lastDoubleTapTime: Date = .distantPast
-   
+
    var body: some View {
 	  VStack(alignment: .center, spacing: 0) {
 		 VStack(spacing: 0) {
 			/// Top spacer
 			VStack {}.frame(height: 120)
-			
+
 			/// The main content
 			VStack(alignment: .center, spacing: 0) {
-			   
+
 			   /// The main big start/stop button with orb
 			   ButtonView(
 				  stateBtnColor: isRecording ? (isUp ? isRecordingColor : .white) : .black,
@@ -81,7 +81,7 @@ struct howFarGPS: View {
 				  screenBounds: self.screenBounds
 			   )
 			   .scaleEffect(1.18)
-			   
+
 			   .overlay(
 				  /// Double tap to start the workout HERE
 				  VStack {
@@ -89,26 +89,26 @@ struct howFarGPS: View {
 						/// Debounce logic: only allow action if enough time has passed
 						if Date().timeIntervalSince(lastDoubleTapTime) > 0.5 {
 						   lastDoubleTapTime = Date()
-						   
+
 						   switch unifiedWorkoutManager.workoutState {
 							  case .notStarted:
 								 if unifiedWorkoutManager.isBeep {
 									PlayHaptic.tap(.start)
 								 }
 								 unifiedWorkoutManager.startNewWorkout()
-								 
+
 							  case .running:
 								 if unifiedWorkoutManager.isBeep {
 									PlayHaptic.tap(.stop)
 								 }
 								 unifiedWorkoutManager.pauseWorkout()
-								 
+
 							  case .paused:
 								 if unifiedWorkoutManager.isBeep {
 									PlayHaptic.tap(.start)
 								 }
 								 unifiedWorkoutManager.resumeWorkout()
-								 
+
 							  case .ended:
 								 /// no-op or re-init if desired
 								 break
@@ -122,136 +122,65 @@ struct howFarGPS: View {
 					 .foregroundColor(.white)
 			   )
 			   .padding(.top, -65)
-			   
+
 			   Spacer()
-			   
+
 			   /// Show time or speed
 			   ShowTimeOrSpeed(
 				  unifiedWorkoutManager: unifiedWorkoutManager
 			   )
 			   Spacer()
 			}
-			/// move these back inside the next VStack if you want to implement
-			/// Yards button
-			//				  HStack {
-			//					 DoubleClickButton(action: {
-			//						unifiedWorkoutManager.showStartText = true
-			//						unifiedWorkoutManager.yardsOrMiles = false
-			//					 }) {
-			//						Image(systemName: "y.circle.fill")
-			//						   .font(.footnote)
-			//						   .foregroundColor(.white)
-			//						   .cornerRadius(10)
-			//					 }
-			//					 .frame(width: width, height: height, alignment: .center)
-			//					 .background(
-			//						LinearGradient(
-			//						   gradient: Gradient(colors: [bgYardsStopTop, bgYardsStopBottom]),
-			//						   startPoint: .bottomLeading,
-			//						   endPoint: .topLeading
-			//						)
-			//					 )
-			//					 .cornerRadius(15)
-			//					 .overlay(
-			//						RoundedRectangle(cornerRadius: 15)
-			//						   .stroke(
-			//							  unifiedWorkoutManager.yardsOrMiles ? .black : .white,
-			//							  lineWidth: 3
-			//						   )
-			//					 )
-			//				  }
-			
-			/// Miles button
-			//				  HStack {
-			//					 DoubleClickButton(action: {
-			//						unifiedWorkoutManager.isSpeed = false
-			//						unifiedWorkoutManager.yardsOrMiles = true
-			//						unifiedWorkoutManager.showStartText = true
-			//					 }) {
-			//						Image(systemName: "m.circle.fill")
-			//						   .font(.footnote)
-			//						   .foregroundColor(.white)
-			//						   .cornerRadius(10)
-			//					 }
-			//					 .frame(width: width, height: height, alignment: .center)
-			//					 .background(
-			//						LinearGradient(
-			//						   gradient: Gradient(colors: [
-			//							  unifiedWorkoutManager.yardsOrMiles
-			//							  ? (!isRecording ? bgMilesStopTop : bgMilesStartTop)
-			//							  : bgMilesStopTop,
-			//							  unifiedWorkoutManager.yardsOrMiles
-			//							  ? (!isRecording ? bgMilesStopBottom : bgMilesStartBottom)
-			//							  : bgMilesStopBottom
-			//						   ]),
-			//						   startPoint: .bottomLeading,
-			//						   endPoint: .topLeading
-			//						)
-			//					 )
-			//					 .cornerRadius(15)
-			//					 .overlay(
-			//						RoundedRectangle(cornerRadius: 15)
-			//						   .stroke(
-			//							  !unifiedWorkoutManager.yardsOrMiles ? .black : .white,
-			//							  lineWidth: 3
-			//						   )
-			//					 )
-			//				  }
-			
-			/// The bottom row for ± reset and yards/miles toggles
-			VStack {
-			   HStack(alignment: .center, spacing: 7) {
-				  HStack {
-					 DoubleClickButton(action: {
-						unifiedWorkoutManager.showStartText = true
-						unifiedWorkoutManager.resetForNewWorkout()
-						unifiedWorkoutManager.forceLocationRefresh()
-					 }) {
-						Image(systemName: "repeat.circle.fill")
-						   .resizable()
-						   .aspectRatio(contentMode: .fit)
-						   .frame(width: 20, height: 20)
-						   .foregroundColor(.white)
-					 }
-					 .frame(width: 25, height: 25, alignment: .center)
-					 					 .background(
-					 						LinearGradient(
-											 gradient: Gradient(
-												colors: [.gpPink, .gpBlue]
-											 ),
-					 						   startPoint: .bottomLeading,
-					 						   endPoint: .topLeading
-					 						)
-					 					 )
-										 .clipShape(.circle)
-//					 					 .cornerRadius(5)
-					 
-				  }
-				  //				  .frame(width: .infinity)
-				  .padding(.leading)
-				  .offset(x: -100)
 
-				  /// New button for walking trigger
-				  HStack {
-					 DoubleClickButton(action: {
-						// Action for the new button can be added here
-					 }) {
-						Image(systemName: "figure.run.circle")
-						   .font(.footnote)
-						   .foregroundColor(unifiedWorkoutManager.isWalkingTriggerOn ? .gpGreen : .gray)
-						   .cornerRadius(10)
+			// MARK: Reset button
+			VStack {
+			   HStack {
+				  // Reset button
+				  DoubleClickButton(action: {
+					 unifiedWorkoutManager.showStartText = true
+					 unifiedWorkoutManager.resetForNewWorkout()
+					 unifiedWorkoutManager.forceLocationRefresh()
+					 if unifiedWorkoutManager.isBeep {
+						PlayHaptic.tap(.success)
 					 }
-					 .frame(width: width + 5, height: height + 5, alignment: .center)
-					 .cornerRadius(15)
+				  }) {
+					 Image(systemName: "arrow.3.trianglepath")
+						.resizable()
+						.aspectRatio(contentMode: .fit)
+						.frame(width: 20, height: 20)
+						.foregroundColor(.white)
 				  }
+				  .frame(width: 30, height: 30)
+				  .background(
+					 LinearGradient(
+						gradient: Gradient(
+						   colors: [.gpBlue, .gpLtBlue]
+						),
+						startPoint: .bottomLeading,
+						endPoint: .topLeading
+					 )
+				  )
+				  .clipShape(.circle)
+
+				  Spacer()
+
+				  // Walking trigger button
+				  DoubleClickButton(action: {
+					 unifiedWorkoutManager.toggleWalkingTrigger(!unifiedWorkoutManager.isWalkingTriggerOn)
+				  }) {
+					 Image(systemName: "figure.run.circle")
+						.font(.footnote)
+						.foregroundColor(unifiedWorkoutManager.isWalkingTriggerOn ? .gpGreen : .gray)
+						.cornerRadius(10)
+				  }
+				  .frame(width: width + 5, height: height + 5)
+				  .cornerRadius(15)
 			   }
-			   .frame(width: (screenBounds.width / 0.5), height: 100)
+			   .padding(.horizontal, 5)
+			   .frame(maxWidth: .infinity)
 			}
-			//			.background(.white).opacity(0.1)
 			.padding(.top, -50)
-			.offset(x: 55)
 		 }
-		 
 		 ZStack {
 			HStack {
 			   HStack {
@@ -260,7 +189,7 @@ struct howFarGPS: View {
 					 size: 17.0
 				  )
 				  .frame(width: 25, height: 40)
-				  .offset(x: 75, y: (-screenBounds.height / 2  - 20))
+				  .offset(x: 78, y: (-screenBounds.height / 2 + 35))
 			   }
 			}
 			.frame(height: 39)
@@ -284,7 +213,7 @@ struct howFarGPS: View {
 		 .cornerRadius(12)
 	  }
    }
-   
+
    /// For debug usage only.
    func updateDebugStr(_ var1: Bool, _ var2: Bool) {
 	  debugStr = "YM: \(String(var1)) - isRec: \(String(var2))"
@@ -300,7 +229,7 @@ struct howFarGPS_Previews: PreviewProvider {
 	  dummyManager.isWalkingTriggerOn = false
 	  dummyManager.GPSAccuracy = 5
 	  dummyManager.isBeep = false
-	  
+
 	  return howFarGPS(unifiedWorkoutManager: dummyManager)
 		 .previewDisplayName("Preview - howFarGPS")
    }

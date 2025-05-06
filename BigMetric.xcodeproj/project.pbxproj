@@ -431,7 +431,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.83.1;
+				MARKETING_VERSION = 2.86;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
@@ -462,7 +462,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.83.1;
+				MARKETING_VERSION = 2.86;
 				PRODUCT_BUNDLE_IDENTIFIER = com.grantperry.BigMetric.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
