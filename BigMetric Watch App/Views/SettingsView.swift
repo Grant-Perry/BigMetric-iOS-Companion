@@ -115,7 +115,7 @@ struct SettingsView: View {
 			// Disabled long press gesture here
 			//			.onLongPressGesture {
 			//			   WKInterfaceDevice.current().play(.click)
-			//			   myOrbViewModel.saveCurrentToNextFavorite()
+			//			   myOrbViewModel.saveToFavorite()
 			//			}
 			
 			VStack(spacing: 4) {

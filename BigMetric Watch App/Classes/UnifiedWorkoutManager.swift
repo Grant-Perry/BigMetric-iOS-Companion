@@ -8,9 +8,6 @@ import Observation
 import UserNotifications
 import OSLog
 
-
-/// This is the CORRECT FILE version - dork
-
 /// UnifiedWorkoutManager is responsible for managing the workout session, handling location updates,
 /// HealthKit workout sessions, and route data insertion.
 @Observable
@@ -36,6 +33,7 @@ class UnifiedWorkoutManager: NSObject,
    var routeBuilder: HKWorkoutRouteBuilder?
 
    var distance: Double = 0.0
+   var totalDistanceAccumulated: CLLocationDistance = 0.0
    var lastHapticMile: Int = 0
    var workoutStepCount: Int = 0
 
@@ -278,7 +276,7 @@ class UnifiedWorkoutManager: NSObject,
    func startNewWorkout() {
 	  resetForNewWorkout()
 	  LMDelegate.delegate = self
-	  clearBufferedLocations() // Explicitly clear buffered locations before initializing workout
+	  clearBufferedLocations()
 
 	  chosenActivityType = activityTypeChoice.hkActivityType
 	  maxSpeedMph = activityTypeChoice.maxSpeed
@@ -500,6 +498,7 @@ class UnifiedWorkoutManager: NSObject,
 	  isShowingDrivingAlert = false
 	  lastValidLocationIndex = nil
 	  lastHapticMile = 0
+	  totalDistanceAccumulated = 0.0
 
 	  elapsedTime = 0
 	  formattedTimeString = "00:00"
@@ -616,7 +615,12 @@ class UnifiedWorkoutManager: NSObject,
 		 // Keep existing mile trigger logic
 		 let prevMiles = Int(distance)
 		 locationsArray.append(contentsOf: newLocs)
-		 distance = locationsArray.calculatedDistance / metersToMiles
+		 if let last = lastLocation, let current = newLocs.last {
+			let delta = current.distance(from: last)
+			totalDistanceAccumulated += delta
+		 }
+		 lastLocation = newLocs.last
+		 distance = totalDistanceAccumulated / metersToMiles
 		 let currentMiles = Int(distance)
 
 		 if currentMiles > prevMiles {
@@ -735,6 +739,22 @@ class UnifiedWorkoutManager: NSObject,
 
    public func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
 	  self.logger.error("Workout session error: \(error.localizedDescription, privacy: .public)")
+
+	  DispatchQueue.main.async {
+		 if let ctrl = WKExtension.shared().rootInterfaceController {
+			// Play strong haptic
+			WKInterfaceDevice.current().play(.notification)
+
+			let okAction = WKAlertAction(title: "OK", style: .default) { }
+
+			ctrl.presentAlert(
+			   withTitle: "Workout Interrupted",
+			   message: "Another app may have taken control of workout tracking. Check your workout detection settings if this happens frequently.",
+			   preferredStyle: .alert,
+			   actions: [okAction]
+			)
+		 }
+	  }
    }
 
    public func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {

@@ -130,17 +130,6 @@ class MyOrbViewModel {
 	  WKInterfaceDevice.current().play(.success)
    }
 
-   func saveCurrentToNextFavorite() {
-	  let newFavorite = OrbColorFavorite(
-		 top: orbColor1.toHex() ?? "#00FF00",
-		 mid: orbColor2.toHex() ?? "#0000FF",
-		 back: orbColor3.toHex() ?? "#FFC0CB",
-		 font: fontColor.toHex() ?? "#FFFFFF"
-	  )
-	  favorites[nextFavoriteSlot] = newFavorite
-	  persistFavorites()
-   }
-
    private static func loadColor(forKey key: String) -> Color? {
 	  guard let hex = UserDefaults.standard.string(forKey: key),
 			!hex.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
