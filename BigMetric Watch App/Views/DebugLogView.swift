@@ -22,14 +22,20 @@ struct DebugLogView: View {
 
 		 ScrollView(.vertical) {
 			VStack(alignment: .leading, spacing: 18) {
-			   // Header
-			   HStack {
-				  Image(systemName: "ladybug.slash")
-					 .foregroundColor(.white)
-				  Text("Debug Log")
-					 .font(.system(size: textSizeHeader, weight: .bold))
-					 .foregroundColor(.white)
+			   // Header as a button while keeping bottom button
+			   Button(action: {
+				  WKInterfaceDevice.current().play(.click)
+				  clearLogs()
+			   }) {
+				  HStack {
+					 Image(systemName: "ladybug.slash")
+						.foregroundColor(.white)
+					 Text("Debug Log")
+						.font(.system(size: textSizeHeader, weight: .bold))
+						.foregroundColor(.white)
+				  }
 			   }
+			   .buttonStyle(.plain)
 			   .padding(.top)
 			   .padding(.horizontal)
 

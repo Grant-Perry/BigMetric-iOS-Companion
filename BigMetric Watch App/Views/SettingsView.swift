@@ -4,17 +4,17 @@ import HealthKit
 import Orb
 
 struct SettingsView: View {
-   
+
    @State var unifiedWorkoutManager: UnifiedWorkoutManager
    @State var weatherKitManager: WeatherKitManager
    @State var geoCodeHelper: GeoCodeHelper
    @State private var showWeatherStatsView = false
    @Environment(MyOrbViewModel.self) private var myOrbViewModel
-   
+
    var body: some View {
 	  content
    }
-   
+
    private var content: some View {
 	  ZStack {
 		 LinearGradient(
@@ -27,11 +27,11 @@ struct SettingsView: View {
 			endPoint: .bottomTrailing
 		 )
 		 .ignoresSafeArea()
-		 
+
 		 scrollContent
 	  }
    }
-   
+
    private var scrollContent: some View {
 	  ScrollView {
 		 VStack(spacing: 16) {
@@ -44,14 +44,14 @@ struct SettingsView: View {
 		 .padding(.vertical)
 	  }
    }
-   
+
    private var settingsSection: some View {
 	  VStack(alignment: .leading, spacing: 12) {
 		 Text("Settings")
 			.font(.system(size: 20, weight: .semibold))
 			.foregroundColor(.white)
 			.padding(.horizontal)
-		 
+
 		 VStack(spacing: 8) {
 			Toggle("Haptic Feedback", isOn: $unifiedWorkoutManager.isBeep)
 			   .toggleStyle(SwitchToggleStyle(tint: .blue))
@@ -66,22 +66,26 @@ struct SettingsView: View {
 	  }
 	  .padding(.horizontal)
    }
-   
+
    private var orbColorSection: some View {
 	  VStack(alignment: .leading, spacing: 12) {
 		 Text("Customize Orb Colors")
 			.font(.system(size: 20, weight: .semibold))
 			.foregroundColor(.white)
 			.padding(.horizontal)
-		 
+
 		 let availableColors: [Color] = [
 			.gpWhite, .gpBlue, .gpLtBlue, .gpPurple, .gpRed, .gpPink,
 			.gpOrange, .gpRedPink, .gpCoral, .gpDeltaPurple, .gpForest, .gpGreen,
 			.gpMinty, .gpBrown, .gpGold, .gpBrightYellow, .gpYellow, .gpBlack
 		 ]
-		 
+
+		 let fontAvailableColors: [Color] = [
+			.gpWhite, .gpGray, .gpDkGray, .gpBlack, .gpLtBlue, .gpRed, .gpGreen, .gpYellow
+		 ]
+
 		 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 6), spacing: 6) {
-			ForEach(availableColors, id: \.self) { color in
+			ForEach(myOrbViewModel.colorIndex == 3 ? fontAvailableColors : availableColors, id: \.self) { color in
 			   Button(action: {
 				  myOrbViewModel.updateNextColor(to: color)
 			   }) {
@@ -92,8 +96,9 @@ struct SettingsView: View {
 			   .buttonStyle(.plain)
 			}
 		 }
+		 .animation(.easeInOut, value: myOrbViewModel.colorIndex == 3)
 		 .frame(height: 108)
-		 
+
 		 // Orb and selection indicators
 		 HStack(alignment: .top, spacing: 12) {
 			OrbView(configuration: OrbConfiguration(
@@ -112,21 +117,16 @@ struct SettingsView: View {
 			))
 			.aspectRatio(1, contentMode: .fit)
 			.frame(width: 80, height: 80)
-			// Disabled long press gesture here
-			//			.onLongPressGesture {
-			//			   WKInterfaceDevice.current().play(.click)
-			//			   myOrbViewModel.saveToFavorite()
-			//			}
-			
+
 			VStack(spacing: 4) {
 			   VStack(spacing: 4) {
 				  HStack(spacing: 20) {
 					 ForEach([0, 1, 2], id: \.self) { index in
 						let color = myOrbViewModel.colorForIndex(index)
-						
+
 						Circle()
 						   .fill(color)
-						   .frame(width: 18, height: 18)
+						   .frame(width: 24, height: 24)
 						   .overlay(
 							  Circle()
 								 .stroke(
@@ -139,15 +139,18 @@ struct SettingsView: View {
 						   }
 					 }
 				  }
-				  
+
+				  Spacer()
+					 .frame(height: 12)
+
 				  HStack(spacing: 8) {
 					 Text("Font:")
 						.font(.caption2)
 						.foregroundColor(.white)
-					 
+
 					 Circle()
 						.fill(myOrbViewModel.fontColor)
-						.frame(width: 18, height: 18)
+						.frame(width: 24, height: 24)
 						.overlay(
 						   Circle()
 							  .stroke(
@@ -165,14 +168,13 @@ struct SettingsView: View {
 				  }
 			   }
 			}
-			
 		 }
-		 
+
 		 HStack(spacing: 12) {
 			ForEach([0, 1, 2], id: \.self) { index in
 			   let (top, mid, back, font) = favoriteColors(at: index)
 			   let isFilled = top != nil && mid != nil && back != nil && font != nil
-			   
+
 			   ZStack {
 				  if isFilled {
 					 Image(systemName: "star.fill")
@@ -209,11 +211,11 @@ struct SettingsView: View {
 			   }
 		 }
 		 .frame(maxWidth: .infinity, alignment: .center)
-		 
+
 	  }
 	  .padding(.horizontal)
    }
-   
+
    private func favoriteColors(at index: Int) -> (Color?, Color?, Color?, Color?) {
 	  guard let fav = myOrbViewModel.favorites[index] else { return (nil, nil, nil, nil) }
 	  return (
@@ -223,14 +225,14 @@ struct SettingsView: View {
 		 Color.fromHex(fav.font)
 	  )
    }
-   
+
    private var activityTypeSection: some View {
 	  VStack(alignment: .leading, spacing: 12) {
 		 Text("Activity Type")
 			.font(.system(size: 20, weight: .semibold))
 			.foregroundColor(.white)
 			.padding(.horizontal)
-		 
+
 		 HStack(spacing: 20) {
 			ForEach([ActivityTypeSetup.walk, .run, .bike]) { choice in
 			   activityTypeButton(choice)
@@ -243,27 +245,27 @@ struct SettingsView: View {
 	  }
 	  .padding(.horizontal)
    }
-   
+
    private var versionInfo: some View {
 	  Text("\(AppConstants.appName) - ver: \(AppConstants.getVersion())")
 		 .font(.system(size: 14, weight: .medium))
 		 .foregroundColor(.white.opacity(0.8))
 		 .padding(.top, 8)
    }
-   
+
    private var weatherSection: some View {
 	  VStack(alignment: .leading, spacing: 12) {
 		 Text("Weather")
 			.font(.system(size: 20, weight: .semibold))
 			.foregroundColor(.white)
 			.padding(.horizontal)
-		 
+
 		 Text(weatherKitManager.locationName)
 			.font(.callout.weight(.medium))
 			.foregroundColor(.white)
 			.frame(maxWidth: .infinity, alignment: .leading)
 			.padding(.horizontal)
-		 
+
 		 VStack {
 			Button(action: {
 			   showWeatherStatsView = true
@@ -282,7 +284,7 @@ struct SettingsView: View {
 	  }
 	  .padding(.horizontal)
    }
-   
+
    private func activityTypeButton(_ choice: ActivityTypeSetup) -> some View {
 	  Button {
 		 unifiedWorkoutManager.activityTypeChoice = choice
@@ -304,7 +306,7 @@ struct SettingsView: View {
 	  }
 	  .buttonStyle(.plain)
    }
-   
+
    private func logAndPersist(_ message: String) {
 	  let timestamp = ISO8601DateFormatter().string(from: Date())
 	  let entry = "[\(timestamp)] \(message)"

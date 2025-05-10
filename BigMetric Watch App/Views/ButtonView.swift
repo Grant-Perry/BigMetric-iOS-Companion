@@ -27,7 +27,7 @@ struct ButtonView: View {
 			myOrbViewModel.orbColor3
 		 ],
 		 glowColor: .white,
-		 coreGlowIntensity: isUp ? 1.0 : 0.25,
+		 coreGlowIntensity: isUp ? 1.0 : 0.5,
 		 showWavyBlobs: true,
 		 showParticles: isUp,
 		 showGlowEffects: isUp,

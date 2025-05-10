@@ -53,7 +53,7 @@ struct InsideButtonTextView: View {
 			   )
 			   
 			   Text(distanceToDisplay)
-				  .font(.title)
+				  .font(.system(size: 72))
 				  .multilineTextAlignment(.center)
 			   
 			   Text(unifiedWorkoutManager.yardsOrMiles ? "Miles" : "Yards")
