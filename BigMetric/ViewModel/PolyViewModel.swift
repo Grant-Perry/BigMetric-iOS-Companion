@@ -15,6 +15,8 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
    ) ?? Date().addingTimeInterval(-30 * 24 * 3600)
    @Published var limit: Int = 45
    @Published var shortRouteFilter: Bool = false // default to off
+   @Published var totalWorkoutCount: Int = 0
+   @Published var filteredWorkoutCount: Int = 0
 
    /// Cache for city names keyed by workout UUID.
    private var cityNameCache: [UUID: String] = [:]
@@ -42,10 +44,6 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
    private let METADATA_KEY_WEATHER_TEMP   = "weatherTemp"
    private let METADATA_KEY_WEATHER_SYMBOL = "weatherSymbol"
    private let METADATA_KEY_ENERGY_BURNED = "energyBurned"
-
-   // ADD: Track filtered vs total counts for debugging
-   private var totalWorkoutCount: Int = 0
-   private var filteredWorkoutCount: Int = 0
 
    /// Call HealthKit permission as soon as this ViewModel is created to ensure compliance.
    init() {
@@ -471,6 +469,18 @@ class PolyViewModel: ObservableObject, @unchecked Sendable {
 	  }
 
 	  print("DP - No energyBurned found for workout \(workout.uuid)")
+	  return nil
+   }
+
+   func fetchHeartRateStats(for workout: HKWorkout) -> (avg: Double?, min: Double?, max: Double?)? {
+	  if #available(iOS 18.0, *) {
+		 if let heartRateStats = workout.statistics(for: HKQuantityType(.heartRate)) {
+			let avg = heartRateStats.averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute()))
+			let min = heartRateStats.minimumQuantity()?.doubleValue(for: .count().unitDivided(by: .minute()))
+			let max = heartRateStats.maximumQuantity()?.doubleValue(for: .count().unitDivided(by: .minute()))
+			return (avg, min, max)
+		 }
+	  }
 	  return nil
    }
 }

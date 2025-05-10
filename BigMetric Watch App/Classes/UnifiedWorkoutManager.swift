@@ -17,33 +17,33 @@ class UnifiedWorkoutManager: NSObject,
 							 HKLiveWorkoutBuilderDelegate,
 							 ObservableObject,
 							 @unchecked Sendable {
-
+   
    // MARK: - Public Properties
-
+   
    /// A callback so the UI can show summary after finishing
    var onEndAndShowSummary: (() -> Void)?
    var logMessage: String = ""
    var workoutFullySaved: Bool = false
    var isSavingToHealthKit: Bool = false
    var workoutState: WorkoutState = .notStarted
-
+   
    let healthStore = HKHealthStore()
    var session: HKWorkoutSession?
    var builder: HKLiveWorkoutBuilder?
    var routeBuilder: HKWorkoutRouteBuilder?
-
+   
    var distance: Double = 0.0
    var totalDistanceAccumulated: CLLocationDistance = 0.0
    var lastHapticMile: Int = 0
    var workoutStepCount: Int = 0
-
+   
    var weatherKitManager: WeatherKitManager
    var geoCodeHelper: GeoCodeHelper
-
+   
    var locationName: String = "Unknown"
    var weatherTemp: String = "--"
    var weatherSymbol: String = ""
-
+   
    var weIsRecording: Bool = false
    var isLocateMgr: Bool = false
    var isBeep: Bool = true
@@ -52,90 +52,94 @@ class UnifiedWorkoutManager: NSObject,
    var isPrecise: Bool = true
    var yardsOrMiles: Bool = true
    var hotColdFirst: Bool = false
-
+   
    let pedometer = CMPedometer()
    var holdInitialSteps: Int = 0
-
+   
    var GPSAccuracy = 99.0
    let metersToFeet  = 0.3048
    let metersToMiles = 1609.344
    let metersToYards = 1.0936133
-
+   
    var timer: Timer?
    var elapsedTime: Double = 0
    var formattedTimeString: String = "00:00"
    var isTimerPaused: Bool = false
-
+   
    var heartRate: Double = 0 {
 	  didSet { heartRateReadings.append(heartRate) }
    }
-
+   
+   var cadence: Double = 0.0
+   var groundContactTime: Double = 0.0
+   var heartRateRange: (min: Double, max: Double) = (0, 0)
+   
    private let logger = Logger(subsystem: "com.gp.BigMetric.UnifiedWorkoutManager", category: "workout")
-
+   
    private(set) var locationAuthStatus: CLAuthorizationStatus = .notDetermined
    private(set) var healthKitAuthStatus: Bool = false
-
+   
    public func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
 	  // If the heading is invalid, just return
 	  guard newHeading.headingAccuracy >= 0 else {
 		 return
 	  }
-
+	  
 	  // Use trueHeading if >= 0, else fall back to magnetic
 	  let updatedCourse = (newHeading.trueHeading >= 0)
 	  ? newHeading.trueHeading
 	  : newHeading.magneticHeading
-
+	  
 	  course = updatedCourse
-
+	  
 	  // Use the defined static method on CardinalDirection
 	  heading = CardinalDirection.from(degrees: updatedCourse).rawValue
    }
    var heartRateReadings: [Double] = []
-
+   
    var LMDelegate = CLLocationManager()
    var locationsArray: [CLLocation] = []
    var altitudes: [AltitudeDataPoint] = []
    var lastLocation: CLLocation?
    var firstLocation: CLLocation?
-
+   
    var isInitialLocationObtained: Bool = false
    var ShowEstablishGPSScreen: Bool = true
    var debugStr: String = ""
-
+   
    var heading: String = "0"
    var course: Double = 0.0
-
+   
    private var consecutiveHighSpeedPoints = 0
    private let maxHighSpeedConsecutive = 2
    private var isShowingDrivingAlert = false
    var lastValidLocationIndex: Int?
    var savedHapticState: Bool = false
    var shouldInsertRouteData: Bool = true
-
+   
    var activityTypeChoice: ActivityTypeSetup = .walk
    var chosenActivityType: HKWorkoutActivityType = .walking
    var maxSpeedMph: Double = 20.0
-
+   
    var shouldFinishWorkoutAfterSessionEnd: Bool = false
-
+   
    var energyBurned: Double = 0
-
+   
    private let activityManager = CMMotionActivityManager()
    private var bufferedLocations: [CLLocation] = []
    private var bufferingTimer: Timer?
    private var promptDismissTimer: Timer?
-
+   
    // MARK: Walking Trigger
-
+   
    private let alertAutoDismissTime: TimeInterval = 120
    private let maxBufferingTime: TimeInterval = 300
    private let activityDetectionThreshold: TimeInterval = 120
    private var userDeclinedCurrentActivity: Bool = false
    var isWalkingTriggerOn: Bool = false
-
+   
    // MARK: - Initialization
-
+   
    init(weatherKitManager: WeatherKitManager = WeatherKitManager(),
 		geoCodeHelper: GeoCodeHelper = GeoCodeHelper()) {
 	  self.weatherKitManager = weatherKitManager
@@ -145,16 +149,16 @@ class UnifiedWorkoutManager: NSObject,
 	  setPrecision()
 	  LMDelegate.activityType = .fitness
 	  LMDelegate.delegate = self  // Set delegate as early as possible
-
-	  // ADD: Proactively request necessary permissions
+	  
+	  // Request location and HealthKit authorization proactively.
 	  requestLocationAuthorization()
 	  requestHKAuth()
-
+	  
 	  setupWorkoutNotificationActions()
 	  startMonitoringActivity()
 	  isWalkingTriggerOn = true
    }
-
+   
    /// Request location authorization proactively.
    func requestLocationAuthorization() {
 	  let status = LMDelegate.authorizationStatus
@@ -167,7 +171,7 @@ class UnifiedWorkoutManager: NSObject,
 		 self.logAndPersist("[UWM] Location permission denied or restricted.")
 	  }
    }
-
+   
    /// CLLocationManagerDelegate method to keep status in sync.
    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
 	  Task { @MainActor in
@@ -185,21 +189,29 @@ class UnifiedWorkoutManager: NSObject,
 			fatalError("Unhandled authorization status.")
 	  }
    }
-
+   
    /// Requests authorization to read and write HealthKit data.
    func requestHKAuth() {
-	  let toWrite: Set<HKSampleType> = [
+	  let typesToShare: Set<HKSampleType> = [
 		 HKObjectType.workoutType(),
 		 HKSeriesType.workoutRoute()
 	  ]
-	  let toRead: Set<HKObjectType> = [
+	  
+	  let typesToRead: Set<HKObjectType> = [
 		 HKObjectType.workoutType(),
 		 HKSeriesType.workoutRoute(),
 		 HKObjectType.quantityType(forIdentifier: .heartRate)!,
 		 HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
-		 HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!
+		 HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,
+		 HKObjectType.quantityType(forIdentifier: .stepCount)!,
+		 HKObjectType.quantityType(forIdentifier: .runningStrideLength)!,
+		 HKObjectType.quantityType(forIdentifier: .runningGroundContactTime)!,
+		 HKObjectType.quantityType(forIdentifier: .runningVerticalOscillation)!,
+		 HKObjectType.quantityType(forIdentifier: .walkingSpeed)!,
+		 HKObjectType.quantityType(forIdentifier: .runningSpeed)!
 	  ]
-	  healthStore.requestAuthorization(toShare: toWrite, read: toRead) { [weak self] success, err in
+	  
+	  healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead) { [weak self] success, err in
 		 DispatchQueue.main.async {
 			self?.healthKitAuthStatus = success
 			if let e = err {
@@ -207,36 +219,39 @@ class UnifiedWorkoutManager: NSObject,
 			   self?.logAndPersist("HealthKit auth error: \(e.localizedDescription)")
 			} else {
 			   self?.logAndPersist("HealthKit auth success: \(success)")
+			   if success {
+				  self?.logAndPersist("Authorized for all required metrics")
+			   }
 			}
 		 }
 	  }
    }
-
+   
    // MARK: - Weather and Location Updates
-
+   
    private func setupWorkoutNotificationActions() {
 	  let startWorkoutAction = UNNotificationAction(
 		 identifier: "START_WORKOUT",
 		 title: "✅ Start Workout",
 		 options: [.foreground]
 	  )
-
+	  
 	  let ignoreWorkoutAction = UNNotificationAction(
 		 identifier: "IGNORE_WORKOUT",
 		 title: "❌ Ignore",
 		 options: []
 	  )
-
+	  
 	  let category = UNNotificationCategory(
 		 identifier: "WORKOUT_DETECTED",
 		 actions: [startWorkoutAction, ignoreWorkoutAction],
 		 intentIdentifiers: [],
 		 options: []
 	  )
-
+	  
 	  UNUserNotificationCenter.current().setNotificationCategories([category])
    }
-
+   
    /// Updates weather info using the WeatherKitManager.
    func updateWeatherInfo(from weatherKitManager: WeatherKitManager) {
 	  locationName  = weatherKitManager.locationName
@@ -244,7 +259,7 @@ class UnifiedWorkoutManager: NSObject,
 	  weatherSymbol = weatherKitManager.symbolVar
 	  self.logger.info("[UWM] Weather updated => city=\(self.locationName), temp=\(self.weatherTemp), symbol=\(self.weatherSymbol)")
    }
-
+   
    /// Asynchronously fetch weather and city information if needed.
    func fetchWeatherAndCityIfNeeded() async {
 	  guard locationName == "Unknown" || weatherTemp == "--" else { return }
@@ -252,10 +267,10 @@ class UnifiedWorkoutManager: NSObject,
 		 self.logger.info("[UWM] No location data => can't do fallback weather.")
 		 return
 	  }
-
+	  
 	  let coord = finalLoc.coordinate
 	  self.logger.info("[UWM] fallback => attempting city geocode & WeatherKit for coord:\(String(describing: coord))")
-
+	  
 	  await withCheckedContinuation { continuation in
 		 geoCodeHelper.getCityNameFromCoordinates(coord.latitude, coord.longitude) { placemark in
 			if let place = placemark {
@@ -264,60 +279,62 @@ class UnifiedWorkoutManager: NSObject,
 			continuation.resume(returning: ())
 		 }
 	  }
-
+	  
 	  await weatherKitManager.getWeather(for: coord)
 	  updateWeatherInfo(from: weatherKitManager)
 	  self.logger.info("[UWM] fallback => got city=\(self.locationName), temp=\(self.weatherTemp), symbol=\(self.weatherSymbol)")
    }
-
+   
    // MARK: - Workout Session Management
-
+   
    /// Starts a new workout session.
    func startNewWorkout() {
 	  resetForNewWorkout()
 	  LMDelegate.delegate = self
 	  clearBufferedLocations()
-
-	  chosenActivityType = activityTypeChoice.hkActivityType
+	  
+	  chosenActivityType = .running  // Force running type to get all metrics
 	  maxSpeedMph = activityTypeChoice.maxSpeed
-
+	  
 	  requestHKAuth()
-
+	  
 	  let config = HKWorkoutConfiguration()
 	  config.activityType = chosenActivityType
 	  config.locationType = .outdoor
-
+	  
 	  do {
 		 session = try HKWorkoutSession(healthStore: healthStore, configuration: config)
 		 builder = session?.associatedWorkoutBuilder()
 		 session?.delegate = self
 		 builder?.delegate = self
+		 
 		 builder?.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: config)
-
+		 
 		 session?.prepare()
-
+		 
 		 let startDate = Date()
 		 session?.startActivity(with: startDate)
 		 builder?.beginCollection(withStart: startDate) { _, _ in
 			self.logger.info("[UWM] beginCollection => collection started")
+			self.logger.info("[UWM] Activity type set to running for metrics collection")
 		 }
-
+		 
 		 routeBuilder = HKWorkoutRouteBuilder(healthStore: healthStore, device: nil)
 	  } catch {
 		 self.logger.error("Error starting HKWorkoutSession: \(error.localizedDescription, privacy: .public)")
 		 return
 	  }
-
+	  
 	  // Cancel automatic workout detection since the user manually started a workout.
 	  userDeclinedCurrentActivity = true
-
+	  
 	  weIsRecording = true
 	  LMDelegate.startUpdatingLocation()
 	  LMDelegate.startUpdatingHeading()
 	  startPedometer(true)
 	  startTimer()
    }
-
+   
    /// Stops and finishes the workout, saving data to HealthKit.
    ///
    /// This method now sets a flag to indicate that the workout should be finished once the session
@@ -327,14 +344,14 @@ class UnifiedWorkoutManager: NSObject,
 	  activityManager.stopActivityUpdates()
 	  userDeclinedCurrentActivity = false
 	  isWalkingTriggerOn = false
-
+	  
 	  isSavingToHealthKit = true
 	  shouldFinishWorkoutAfterSessionEnd = true
 	  endCurrentWorkout()
-
+	  
 	  // Clear any buffered locations immediately
 	  clearBufferedLocations()
-
+	  
 	  DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
 		 guard let self = self else { return }
 		 if self.isSavingToHealthKit && self.shouldFinishWorkoutAfterSessionEnd {
@@ -344,7 +361,7 @@ class UnifiedWorkoutManager: NSObject,
 		 }
 	  }
    }
-
+   
    /// Ends the current workout.
    func endCurrentWorkout() {
 	  session?.end()
@@ -352,7 +369,7 @@ class UnifiedWorkoutManager: NSObject,
 	  stopPedometer()
 	  workoutState = .ended
    }
-
+   
    /// Finishes the workout and the route, writing data to HealthKit.
    // FIX: Improve the finishWorkoutAndRoute method to handle errors better
    /// Finishes the workout and the route, writing data to HealthKit.
@@ -362,25 +379,25 @@ class UnifiedWorkoutManager: NSObject,
 		 isSavingToHealthKit = false
 		 return
 	  }
-
+	  
 	  guard let thisBuilder = builder else {
 		 self.logger.info("[UWM] No workout builder available, cannot finish workout")
 		 isSavingToHealthKit = false
 		 return
 	  }
-
+	  
 	  Task {
 		 do {
 			// End collection and await result using async extension
 			try await thisBuilder.endCollectionAsync(withEnd: Date())
 			self.logger.info("[UWM] Collection ended successfully")
-
+			
 			// ENHANCE: Weather data validation and fetching
 			if locationName == "Unknown" || weatherTemp == "--" || weatherSymbol.isEmpty {
 			   if let lastLocation = locationsArray.last {
 				  self.logger.info("[UWM] Missing weather data - fetching from last waypoint")
 				  await weatherKitManager.getWeather(for: lastLocation.coordinate)
-
+				  
 				  // Get location name if missing
 				  if locationName == "Unknown" {
 					 await withCheckedContinuation { continuation in
@@ -395,23 +412,23 @@ class UnifiedWorkoutManager: NSObject,
 						}
 					 }
 				  }
-
+				  
 				  updateWeatherInfo(from: weatherKitManager)
 				  self.logger.info("[UWM] Weather data updated: city=\(self.locationName), temp=\(self.weatherTemp), symbol=\(self.weatherSymbol)")
 			   }
 			}
-
-			let meta = buildMetadataDictionary()
-
+			
+			let meta = self.buildMetadataDictionary()
+			
 			// Rest of the existing code remains the same...
 			try await thisBuilder.addMetadataAsync(meta)
 			self.logger.info("[UWM] Metadata added successfully")
-
+			
 			// Existing workout finishing code...
-
+			
 			let workout = try await thisBuilder.finishWorkoutAsync()
 			self.logger.info("[UWM] Workout finished successfully: \(String(describing: workout.uuid))")
-
+			
 			if let routeBuilder = self.routeBuilder, !self.locationsArray.isEmpty {
 			   try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
 				  routeBuilder.insertRouteData(self.locationsArray) { success, error in
@@ -426,27 +443,27 @@ class UnifiedWorkoutManager: NSObject,
 			   }
 			   self.logger.info("[UWM] Inserted \(self.locationsArray.count) locations into route before finishing.")
 			}
-
+			
 			if let routeBuilder = self.routeBuilder {
 			   try await routeBuilder.finishRouteAsync(with: workout, metadata: nil)
 			   self.logger.info("[UWM] Route successfully added to workout: \(String(describing: workout.uuid))")
 			}
-
+			
 			self.workoutFullySaved = true
 			self.isSavingToHealthKit = false
-
+			
 			DispatchQueue.main.async {
 			   self.logger.info("[UWM] Calling onEndAndShowSummary callback")
 			   self.onEndAndShowSummary?()
 			}
-
+			
 			self.startMonitoringActivity()
 			self.isWalkingTriggerOn = true
-
+			
 		 } catch {
 			self.logger.error("[UWM] Error finishing workout: \(String(describing: error.localizedDescription), privacy: .public)")
 			self.isSavingToHealthKit = false
-
+			
 			DispatchQueue.main.async {
 			   self.workoutFullySaved = true
 			   self.onEndAndShowSummary?()
@@ -454,29 +471,45 @@ class UnifiedWorkoutManager: NSObject,
 		 }
 	  }
    }
-
+   
    /// Builds a metadata dictionary for the workout.
    private func buildMetadataDictionary() -> [String: Any] {
-	  let finalDistance = distance
-	  let finalDuration = elapsedTime
+	  let finalDistance = self.distance
+	  let finalDuration = self.elapsedTime
 	  var averageSpeed: Double = 0
 	  if finalDuration > 0 {
 		 averageSpeed = finalDistance / (finalDuration / 3600.0)
 	  }
-	  let meta: [String: Any] = [
+	  
+	  var meta: [String: Any] = [
 		 "finalDistance": String(format: "%.3f", finalDistance),
 		 "finalDuration": String(format: "%.0f", finalDuration),
 		 "averageSpeed":  String(format: "%.2f", averageSpeed),
-		 "stepCount":     String(workoutStepCount),
-		 "weatherCity":   locationName,
-		 "weatherTemp":   weatherTemp,
-		 "weatherSymbol": weatherSymbol,
-		 "energyBurned": String(format: "%.0f", energyBurned)  // Add this line
+		 "stepCount":     String(self.workoutStepCount),
+		 "weatherCity":   self.locationName,
+		 "weatherTemp":   self.weatherTemp,
+		 "weatherSymbol": self.weatherSymbol,
+		 "energyBurned": String(format: "%.0f", self.energyBurned)
 	  ]
+	  
+	  // Add heart rate data explicitly
+	  meta["heartRate"] = String(format: "%.0f", self.heartRate)
+	  meta["minHeartRate"] = String(format: "%.0f", self.heartRateRange.min)
+	  meta["maxHeartRate"] = String(format: "%.0f", self.heartRateRange.max)
+	  
+	  // Add running dynamics if available
+	  if self.groundContactTime > 0 {
+		 meta["groundContactTime"] = String(format: "%.0f", self.groundContactTime)
+	  }
+	  if self.cadence > 0 {
+		 meta["cadence"] = String(format: "%.0f", self.cadence)
+	  }
+	  
+	  self.logger.info("[UWM] buildMetadataDictionary => Heart Rate: \(self.heartRate), Range: \(self.heartRateRange.min)-\(self.heartRateRange.max)")
 	  self.logger.info("[UWM] buildMetadataDictionary => \(meta)")
 	  return meta
    }
-
+   
    /// Resets all data for a new workout session.
    func resetForNewWorkout() {
 	  // Add safety check to stop activity monitoring first
@@ -484,10 +517,10 @@ class UnifiedWorkoutManager: NSObject,
 	  activityManager.stopActivityUpdates()
 	  userDeclinedCurrentActivity = false
 	  isWalkingTriggerOn = false
-
+	  
 	  timer?.invalidate()
 	  timer = nil
-
+	  
 	  workoutStepCount = 0
 	  holdInitialSteps = 0
 	  locationsArray.removeAll()
@@ -499,17 +532,17 @@ class UnifiedWorkoutManager: NSObject,
 	  lastValidLocationIndex = nil
 	  lastHapticMile = 0
 	  totalDistanceAccumulated = 0.0
-
+	  
 	  elapsedTime = 0
 	  formattedTimeString = "00:00"
-
+	  
 	  routeBuilder = nil
 	  session = nil
 	  builder = nil
 	  workoutFullySaved = false
 	  weIsRecording = false
 	  workoutState = .notStarted
-
+	  
 	  isInitialLocationObtained = false
 	  ShowEstablishGPSScreen = true
 	  isLocateMgr = false
@@ -517,35 +550,35 @@ class UnifiedWorkoutManager: NSObject,
 	  course = 0.0
 	  distance = 0.0
 	  shouldInsertRouteData = true
-
+	  
 	  locationName = "Unknown"
 	  weatherTemp = "--"
 	  weatherSymbol = ""
 	  energyBurned = 0
-
+	  
 	  isSavingToHealthKit = false
-
+	  
 	  // Clear any buffered locations and timers
 	  clearBufferedLocations()
 	  bufferingTimer?.invalidate()
 	  promptDismissTimer?.invalidate()
-
+	  
 	  // Reset location manager properties
 	  LMDelegate.desiredAccuracy = kCLLocationAccuracyThreeKilometers
 	  LMDelegate.desiredAccuracy = isPrecise ? kCLLocationAccuracyBest : kCLLocationAccuracyNearestTenMeters
 	  GPSAccuracy = 99.0
-
+	  
 	  self.logger.info("resetForNewWorkout => data cleared, fresh session, location updates stopped.")
    }
-
+   
    // MARK: - Pedometer
-
+   
    /// Stops pedometer updates.
    func stopPedometer() {
 	  pedometer.stopUpdates()
 	  pedometer.stopEventUpdates()
    }
-
+   
    /// Starts pedometer updates.
    func startPedometer(_ startStop: Bool) {
 	  if CMPedometer.isStepCountingAvailable() {
@@ -557,7 +590,7 @@ class UnifiedWorkoutManager: NSObject,
 				  let initialSteps = Int(truncating: d.numberOfSteps)
 				  self.logger.info("[Pedometer] Initial steps: \(initialSteps)")
 				  self.holdInitialSteps = initialSteps
-
+				  
 				  self.pedometer.startUpdates(from: midnight) { [weak self] stepData, _ in
 					 guard let self = self,
 						   let stepData = stepData else { return }
@@ -571,15 +604,15 @@ class UnifiedWorkoutManager: NSObject,
 		 }
 	  }
    }
-
+   
    /// Sets location manager precision.
    func setPrecision() {
 	  LMDelegate.distanceFilter = isPrecise ? 1 : 10
 	  LMDelegate.desiredAccuracy = isPrecise ? kCLLocationAccuracyBest : kCLLocationAccuracyNearestTenMeters
    }
-
+   
    // MARK: - Location Manager Delegate
-
+   
    /// Updates location data and filters for a fresh starting location.
    /// For the initial update, only locations with a timestamp within 5 seconds are accepted.
    /// Additionally, during the first 10 seconds of the workout, any update that is more than 750 meters
@@ -589,15 +622,15 @@ class UnifiedWorkoutManager: NSObject,
 	  guard workoutState == .running, weIsRecording else {
 		 return
 	  }
-
+	  
 	  // Check for driving speed
 	  if let latestLocation = newLocs.last {
 		 // Convert speed from m/s to mph
 		 let speedInMph = (latestLocation.speed * 2.23694)
-
+		 
 		 if speedInMph > maxSpeedMph {
 			consecutiveHighSpeedPoints += 1
-
+			
 			if consecutiveHighSpeedPoints >= maxHighSpeedConsecutive && !isShowingDrivingAlert {
 			   isShowingDrivingAlert = true
 			   session?.pause()
@@ -609,9 +642,18 @@ class UnifiedWorkoutManager: NSObject,
 			consecutiveHighSpeedPoints = 0
 		 }
 	  }
-
+	  
 	  // Proceed with normal location updates if not driving
 	  if shouldInsertRouteData {
+		 for location in newLocs {
+			// Add altitude point
+			let altitudePoint = AltitudeDataPoint(
+			   value: location.altitude,
+			   dist: totalDistanceAccumulated
+			)
+			altitudes.append(altitudePoint)
+		 }
+		 
 		 // Keep existing mile trigger logic
 		 let prevMiles = Int(distance)
 		 locationsArray.append(contentsOf: newLocs)
@@ -622,27 +664,27 @@ class UnifiedWorkoutManager: NSObject,
 		 lastLocation = newLocs.last
 		 distance = totalDistanceAccumulated / metersToMiles
 		 let currentMiles = Int(distance)
-
+		 
 		 if currentMiles > prevMiles {
 			lastHapticMile = currentMiles
 			WKInterfaceDevice.current().play(.notification)
 			self.logger.info("[UWM] Mile alert immediately triggered at exact mile: \(currentMiles)")
 		 }
-
+		 
 		 if let lastLocation = newLocs.last {
 			NotificationCenter.default.post(name: .didUpdateLocation, object: lastLocation)
 		 }
 	  }
    }
-
+   
    // MARK: - locationManagers
-
+   
    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
 	  self.logger.error("Location manager error: \(error.localizedDescription, privacy: .public)")
    }
-
+   
    // MARK: - Driving Alert
-
+   
    /// Presents an alert if high speeds are detected, to check whether the user is driving.
    func presentDrivingAlert() {
 	  guard let ctrl = WKExtension.shared().rootInterfaceController else {
@@ -650,15 +692,15 @@ class UnifiedWorkoutManager: NSObject,
 		 isShowingDrivingAlert = false
 		 return
 	  }
-
+	  
 	  WKInterfaceDevice.current().play(.directionDown)
-
+	  
 	  savedHapticState = isBeep
 	  isBeep = false
 	  isTimerPaused = true
 	  timer?.invalidate()
 	  timer = nil
-
+	  
 	  let endAction = WKAlertAction(title: "End Workout", style: .destructive) { [weak self] in
 		 guard let self = self else { return }
 		 self.stopAndFinish()
@@ -666,7 +708,7 @@ class UnifiedWorkoutManager: NSObject,
 		 self.isBeep = self.savedHapticState
 		 self.isTimerPaused = false
 	  }
-
+	  
 	  let ignoreAction = WKAlertAction(title: "Ignore", style: .default) { [weak self] in
 		 guard let self = self else { return }
 		 self.session?.resume()
@@ -677,7 +719,7 @@ class UnifiedWorkoutManager: NSObject,
 		 self.isTimerPaused = false
 		 self.startTimer()
 	  }
-
+	  
 	  ctrl.presentAlert(
 		 withTitle: "Are You Driving?",
 		 message: "Speed over \(Int(maxSpeedMph)) mph.\nEnd the workout?",
@@ -685,9 +727,9 @@ class UnifiedWorkoutManager: NSObject,
 		 actions: [endAction, ignoreAction]
 	  )
    }
-
+   
    // MARK: - HealthKit Workout Session Delegate
-
+   
    /// Delegate method that tracks state changes in the workout session.
    ///
    /// Modification: When the session state transitions to .ended or .stopped, if the
@@ -698,7 +740,7 @@ class UnifiedWorkoutManager: NSObject,
 							  from fromState: HKWorkoutSessionState,
 							  date: Date) {
 	  self.logger.info("[UWM] Session changed from \(fromState.rawValue) to \(toState.rawValue)")
-
+	  
 	  DispatchQueue.main.async {
 		 switch toState {
 			case .running:
@@ -710,7 +752,7 @@ class UnifiedWorkoutManager: NSObject,
 			case .ended, .stopped:
 			   self.weIsRecording = false
 			   self.workoutState = .ended
-
+			   
 			   // If we intended to finish the workout, do so now after session end
 			   if self.shouldFinishWorkoutAfterSessionEnd {
 				  self.logger.info("[UWM] Session ended - proceeding with finishWorkoutAndRoute")
@@ -726,27 +768,27 @@ class UnifiedWorkoutManager: NSObject,
 		 }
 	  }
    }
-
+   
    /// Pauses the workout session.
    func pauseWorkout() {
 	  session?.pause()
    }
-
+   
    /// Resumes the workout session.
    func resumeWorkout() {
 	  session?.resume()
    }
-
+   
    public func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
 	  self.logger.error("Workout session error: \(error.localizedDescription, privacy: .public)")
-
+	  
 	  DispatchQueue.main.async {
 		 if let ctrl = WKExtension.shared().rootInterfaceController {
 			// Play strong haptic
 			WKInterfaceDevice.current().play(.notification)
-
+			
 			let okAction = WKAlertAction(title: "OK", style: .default) { }
-
+			
 			ctrl.presentAlert(
 			   withTitle: "Workout Interrupted",
 			   message: "Another app may have taken control of workout tracking. Check your workout detection settings if this happens frequently.",
@@ -756,40 +798,65 @@ class UnifiedWorkoutManager: NSObject,
 		 }
 	  }
    }
-
+   
    public func workoutBuilderDidCollectEvent(_ workoutBuilder: HKLiveWorkoutBuilder) {
 	  // no-op
    }
-
+   
    public func workoutBuilder(_ workoutBuilder: HKLiveWorkoutBuilder,
 							  didCollectDataOf collectedTypes: Set<HKSampleType>) {
 	  for type in collectedTypes {
 		 guard let quantityType = type as? HKQuantityType else { continue }
 		 let stats = workoutBuilder.statistics(for: quantityType)
-		 updateForStatistics(stats)
-	  }
-   }
-
-   public func updateForStatistics(_ statistics: HKStatistics?) {
-	  guard let s = statistics else { return }
-	  DispatchQueue.main.async {
-		 if s.quantityType == HKQuantityType.quantityType(forIdentifier: .heartRate) {
-			let hrUnit = HKUnit.count().unitDivided(by: .minute())
-			self.heartRate = s.mostRecentQuantity()?.doubleValue(for: hrUnit) ?? 0
-		 } else if s.quantityType == HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
-			// Add this else if block for energy burned
-			let energyUnit = HKUnit.kilocalorie()
-			self.energyBurned = s.sumQuantity()?.doubleValue(for: energyUnit) ?? 0
+		 
+		 switch quantityType {
+			case HKQuantityType(.heartRate):
+			   if let value = stats?.mostRecentQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())) {
+				  self.heartRate = value
+				  if let min = stats?.minimumQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())),
+					 let max = stats?.maximumQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())) {
+					 self.heartRateRange = (min, max)
+					 self.logger.info("[UWM] Heart Rate Updated - Current: \(value), Min: \(min), Max: \(max)")
+				  }
+			   }
+			   
+			case HKQuantityType(.activeEnergyBurned):
+			   if let value = stats?.sumQuantity()?.doubleValue(for: .kilocalorie()) {
+				  self.energyBurned = value
+				  self.logger.info("[UWM] Energy burned updated: \(value)kcal")
+			   }
+			   
+			case HKQuantityType(.stepCount):
+			   if let value = stats?.sumQuantity()?.doubleValue(for: .count()) {
+				  self.workoutStepCount = Int(value)
+				  self.logger.info("[UWM] Steps updated: \(Int(value))")
+			   }
+			   
+			case HKQuantityType(.runningStrideLength):
+			   if let value = stats?.averageQuantity()?.doubleValue(for: .meter()) {
+				  self.cadence = value  // Store in meters
+				  self.logger.info("[UWM] Stride Length updated: \(value)m")
+			   }
+			   
+			case HKQuantityType(.runningGroundContactTime):
+			   if let value = stats?.averageQuantity()?.doubleValue(for: .second()) {
+				  let milliseconds = value * 1000  // Convert seconds to milliseconds
+				  self.groundContactTime = milliseconds
+				  self.logger.info("[UWM] Ground Contact Time updated: \(milliseconds)ms")
+			   }
+			   
+			case HKQuantityType(.runningVerticalOscillation):
+			   if let value = stats?.averageQuantity()?.doubleValue(for: .meter()) {
+				  let centimeters = value * 100  // Convert meters to centimeters
+				  self.logger.info("[UWM] Vertical oscillation updated: \(centimeters)cm")
+			   }
+			   
+			default:
+			   break
 		 }
 	  }
    }
-
-   // MARK: - Timer
-
-   func numTimerHours() -> Int {
-	  Int(elapsedTime / 3600)
-   }
-
+   
    /// Formats the elapsed time into a string.
    private func formatElapsed(_ interval: TimeInterval) -> String {
 	  let i = Int(interval)
@@ -802,7 +869,7 @@ class UnifiedWorkoutManager: NSObject,
 		 return String(format: "%02d:%02d", mins, secs)
 	  }
    }
-
+   
    /// Starts the timer that updates elapsed time.
    private func startTimer() {
 	  timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -813,7 +880,7 @@ class UnifiedWorkoutManager: NSObject,
 		 self.formattedTimeString = self.formatElapsed(self.elapsedTime)
 	  }
    }
-
+   
    func forceLocationRefresh() {
 	  LMDelegate.stopUpdatingLocation()
 	  // Wait briefly before restarting
@@ -821,21 +888,21 @@ class UnifiedWorkoutManager: NSObject,
 		 self?.LMDelegate.startUpdatingLocation()
 	  }
    }
-
+   
    // MARK: - Automatic Workout Detection Methods
-
+   
    func startMonitoringActivity() {
 	  guard CMMotionActivityManager.isActivityAvailable() else {
 		 self.logger.info("[UWM] 🚨 Motion activity NOT available!")
 		 isWalkingTriggerOn = false
 		 return
 	  }
-
+	  
 	  activityManager.startActivityUpdates(to: .main) { [weak self] activity in
 		 guard let self = self, let activity = activity else { return }
-
+		 
 		 self.logger.info("[UWM] ⚠️ Explicit Activity Detected: walking=\(activity.walking), running=\(activity.running), stationary=\(activity.stationary)")
-
+		 
 		 if activity.stationary {
 			if self.userDeclinedCurrentActivity {
 			   self.userDeclinedCurrentActivity = false
@@ -843,73 +910,73 @@ class UnifiedWorkoutManager: NSObject,
 			}
 			return
 		 }
-
+		 
 		 if (activity.walking || activity.running), self.workoutState == .notStarted {
 			self.logger.info("[UWM] ✅ handlePotentialWorkoutStart explicitly called!")
 			self.handlePotentialWorkoutStart()
 		 }
 	  }
-
+	  
 	  isWalkingTriggerOn = true
    }
-
+   
    private func handlePotentialWorkoutStart() {
 	  guard !userDeclinedCurrentActivity else {
 		 self.logger.info("[UWM] ⚠️ Explicitly NOT prompting again. User previously declined this activity.")
 		 return
 	  }
-
+	  
 	  startBufferingLocations()
-
+	  
 	  DispatchQueue.main.asyncAfter(deadline: .now() + activityDetectionThreshold) { [weak self] in
 		 guard let self = self, self.workoutState == .notStarted, !self.userDeclinedCurrentActivity else { return }
 		 self.promptUserToStartWorkout()
 	  }
-
+	  
 	  bufferingTimer = Timer.scheduledTimer(withTimeInterval: maxBufferingTime, repeats: false) { [weak self] _ in
 		 self?.clearBufferedLocations()
 	  }
    }
-
+   
    private func handlePotentialWorkoutStartFirstTime() {
 	  guard bufferedLocations.isEmpty else { return }
-
+	  
 	  startBufferingLocations()
-
+	  
 	  DispatchQueue.main.asyncAfter(deadline: .now() + activityDetectionThreshold) { [weak self] in
 		 guard let self = self, self.workoutState == .notStarted else { return }
 		 self.promptUserToStartWorkout()
 	  }
-
+	  
 	  bufferingTimer = Timer.scheduledTimer(withTimeInterval: maxBufferingTime, repeats: false) { [weak self] _ in
 		 self?.clearBufferedLocations()
 	  }
    }
-
+   
    private func startBufferingLocations() {
 	  LMDelegate.startUpdatingLocation()
 	  NotificationCenter.default.addObserver(self, selector: #selector(bufferLocation(_:)), name: .didUpdateLocation, object: nil)
    }
-
+   
    @objc private func bufferLocation(_ notification: Notification) {
 	  guard let location = notification.object as? CLLocation else { return }
 	  bufferedLocations.append(location)
 	  self.logger.info("[UWM] 📍 Buffered Location Explicitly: \(location.coordinate.latitude), \(location.coordinate.longitude), accuracy=\(location.horizontalAccuracy)m")
    }
-
+   
    private func promptUserToStartWorkout() {
 	  let content = UNMutableNotificationContent()
 	  content.title = "Workout detected!"
 	  content.body = "Are you walking now?"
 	  content.categoryIdentifier = "WORKOUT_DETECTED"
 	  content.sound = .default
-
+	  
 	  let request = UNNotificationRequest(
 		 identifier: UUID().uuidString,
 		 content: content,
 		 trigger: nil
 	  )
-
+	  
 	  UNUserNotificationCenter.current().add(request) { error in
 		 if let error = error {
 			self.logger.error("[UWM] ❌ Explicit notification scheduling FAILED: \(error.localizedDescription, privacy: .public)")
@@ -917,26 +984,26 @@ class UnifiedWorkoutManager: NSObject,
 			self.logger.info("[UWM] ✅ Explicit notification scheduled successfully!")
 		 }
 	  }
-
+	  
 	  promptDismissTimer = Timer.scheduledTimer(withTimeInterval: alertAutoDismissTime, repeats: false) { [weak self] _ in
 		 self?.clearBufferedLocations()
 		 UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [request.identifier])
 	  }
    }
-
+   
    func userConfirmedWorkout() {
 	  startNewWorkout()
-
+	  
 	  guard !bufferedLocations.isEmpty else {
 		 self.logger.info("[UWM] ❌ No buffered locations explicitly available at confirmation!")
 		 return
 	  }
-
+	  
 	  guard let routeBuilder = routeBuilder else {
 		 self.logger.info("[UWM] ❌ routeBuilder is explicitly nil!")
 		 return
 	  }
-
+	  
 	  routeBuilder.insertRouteData(bufferedLocations) { success, error in
 		 if success {
 			self.logger.info("[UWM] ✅ Buffered locations explicitly inserted into workout route.")
@@ -944,31 +1011,31 @@ class UnifiedWorkoutManager: NSObject,
 			self.logger.error("[UWM] ❌ Failed explicitly to insert buffered locations: \(error.localizedDescription, privacy: .public)")
 		 }
 	  }
-
+	  
 	  // Explicitly calculate distance immediately for UI
 	  locationsArray.append(contentsOf: bufferedLocations)
 	  distance = locationsArray.calculatedDistance / metersToMiles
 	  self.logger.info("[UWM] ✅ Explicitly updated distance from buffered locations: \(self.distance) miles.")
-
+	  
 	  clearBufferedLocations()
    }
-
+   
    func userDeclinedWorkout() {
 	  clearBufferedLocations()
 	  userDeclinedCurrentActivity = true
 	  self.logger.info("[UWM] ✅ User explicitly declined workout. Temporarily disabling further alerts for this session.")
    }
-
+   
    private func clearBufferedLocations() {
 	  bufferedLocations.removeAll()
 	  bufferingTimer?.invalidate()
 	  promptDismissTimer?.invalidate()
 	  NotificationCenter.default.removeObserver(self, name: .didUpdateLocation, object: nil)
 	  LMDelegate.stopUpdatingLocation()
-
+	  
 	  isWalkingTriggerOn = false
    }
-
+   
    /// Toggles the walking trigger and handles buffered locations.
    /// - Parameter isOn: A Boolean indicating whether the walking trigger is enabled.
    func toggleWalkingTrigger(_ isOn: Bool) {
@@ -982,14 +1049,14 @@ class UnifiedWorkoutManager: NSObject,
 		 self.logger.info("[UWM] ✅ Walking trigger explicitly turned ON.")
 	  }
    }
-
+   
    // MARK: - Helper method to completely stop location updates
    private func stopAllLocationUpdates() {
 	  LMDelegate.delegate = nil  // Remove self as delegate
 	  LMDelegate.stopUpdatingLocation()
 	  LMDelegate.stopUpdatingHeading()
    }
-
+   
    // MARK: - helper to persist the OSLog
    func logAndPersist(_ message: String) {
 	  logger.info("\(message, privacy: .public)")
@@ -999,7 +1066,7 @@ class UnifiedWorkoutManager: NSObject,
 	  logs.append(entry)
 	  UserDefaults.standard.set(Array(logs.suffix(250)), forKey: "logHistory") // limit to last 250 logs
    }
-
+   
    // MARK: End of Class
 }
 

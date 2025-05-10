@@ -4,12 +4,11 @@
 //   Created by: Grant Perry on 1/1/24 at 1:23 PM
 //     Modified:
 //
-//  Copyright © Delicious Studios, LLC. - Grant Perry
+//  Copyright Delicious Studios, LLC. - Grant Perry
 //
 
 import SwiftUI
 
-// ADD: Display mode enum
 enum DisplayMode {
    case speed
    case time
@@ -18,7 +17,6 @@ enum DisplayMode {
 
 struct ShowTimeOrSpeed: View {
    @State var unifiedWorkoutManager: UnifiedWorkoutManager
-   // ADD: Display mode state
    @State private var displayMode: DisplayMode = .speed
 
    private var paceString: String {
@@ -34,6 +32,30 @@ struct ShowTimeOrSpeed: View {
 	  return String(format: "%d:%02d", minutes, seconds)
    }
 
+   private var speedValue: Double {
+	  guard unifiedWorkoutManager.elapsedTime > 0 else { return 0 }
+	  let speed = (unifiedWorkoutManager.distance / unifiedWorkoutManager.elapsedTime) * 3600
+	  return speed.isNaN || speed.isInfinite ? 0 : speed
+   }
+
+   private var hasHours: Bool {
+	  let components = unifiedWorkoutManager.formattedTimeString.split(separator: ":")
+	  return components.count > 2
+   }
+
+   private var displayText: Text {
+	  switch displayMode {
+		 case .speed:
+			return Text(gpNumFormat.formatNumber(speedValue, 1))
+		 case .time:
+			return Text(unifiedWorkoutManager.formattedTimeString)
+			   .foregroundColor(.gpYellow)
+		 case .pace:
+			return Text(paceString)
+			   .foregroundColor(.gpGreen)
+	  }
+   }
+
    var body: some View {
 	  VStack {
 		 if unifiedWorkoutManager.yardsOrMiles {
@@ -45,7 +67,6 @@ struct ShowTimeOrSpeed: View {
 				  .foregroundColor(.white)
 
 			   Button(action: {
-				  // CHANGE: Cycle through display modes
 				  switch displayMode {
 					 case .speed:
 						displayMode = .time
@@ -55,32 +76,15 @@ struct ShowTimeOrSpeed: View {
 						displayMode = .speed
 				  }
 			   }) {
-				  Group {
-					 switch displayMode {
-						case .speed:
-						   let speedValue = unifiedWorkoutManager.elapsedTime == 0
-						   ? 0
-						   : (unifiedWorkoutManager.distance / unifiedWorkoutManager.elapsedTime * 3600)
-						   Text(speedValue.isNaN || speedValue.isInfinite
-								? "0"
-								: "\(gpNumFormat.formatNumber(speedValue, 1))")
-						   .foregroundColor(.white)
-						case .time:
-						   Text(unifiedWorkoutManager.formattedTimeString)
-							  .foregroundColor(.gpYellow)
-						case .pace:
-						   Text(paceString)
-							  .foregroundColor(.gpGreen)
-					 }
-				  }
-				  .font(displayMode == .time && unifiedWorkoutManager.numTimerHours() > 0
-						? .system(size: 28)
-						: .system(size: 32))
+				  displayText
+					 .foregroundColor(displayMode == .speed ? .white : nil)
+					 .font(displayMode == .time && hasHours
+						   ? .system(size: 28)
+						   : .system(size: 32))
 			   }
-
 			   .buttonStyle(PlainButtonStyle())
 			   .background(Color.clear)
-			   //			   .frame(width: 95, height: 45)
+			   //               .frame(width: 95, height: 45)
 			   .frame(maxWidth: .infinity)
 			   .lineLimit(1)
 			   .minimumScaleFactor(0.65)
@@ -104,7 +108,6 @@ struct ShowTimeOrSpeed: View {
    }
 }
 
-// ADD: Preview
 #Preview {
    let mockWorkoutManager = UnifiedWorkoutManager()
 

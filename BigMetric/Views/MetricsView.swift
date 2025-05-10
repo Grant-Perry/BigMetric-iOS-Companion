@@ -4,16 +4,36 @@ import HealthKit
 public struct MetricsView: View {
    var workout: WorkoutCore
    var metricMeta: MetricMeta
-
+   
    private var textSizeBig: Int = 30
    private var textSizeSmall: Int = 20
-
+   
+   private let numberFormatter: NumberFormatter = {
+	  let formatter = NumberFormatter()
+	  formatter.numberStyle = .decimal
+	  formatter.minimumFractionDigits = 0
+	  formatter.maximumFractionDigits = 2
+	  return formatter
+   }()
+   
+   private func formatNumber(_ value: Double, fractionDigits: Int = 0) -> String {
+	  numberFormatter.minimumFractionDigits = fractionDigits
+	  numberFormatter.maximumFractionDigits = fractionDigits
+	  return numberFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.\(fractionDigits)f", value)
+   }
+   
+   private func formatInteger(_ value: Int) -> String {
+	  numberFormatter.minimumFractionDigits = 0
+	  numberFormatter.maximumFractionDigits = 0
+	  return numberFormatter.string(from: NSNumber(value: value)) ?? String(value)
+   }
+   
    private var averagePace: String {
 	  guard workout.distance > 0 else { return "0:00" }
-
+	  
 	  let components = metricMeta.totalTime.split(separator: ":")
 	  var totalSeconds = 0
-
+	  
 	  if components.count == 2 {
 		 if let minutes = Int(components[0]),
 			let seconds = Int(components[1]) {
@@ -26,18 +46,18 @@ public struct MetricsView: View {
 			totalSeconds = hours * 3600 + minutes * 60 + seconds
 		 }
 	  }
-
+	  
 	  let paceInMinutes = Double(totalSeconds) / 60.0 / workout.distance
 	  let minutes = Int(paceInMinutes)
 	  let seconds = Int((paceInMinutes - Double(minutes)) * 60)
-
+	  
 	  return String(format: "%d:%02d", minutes, seconds)
    }
-
+   
    private var endTime: Date {
 	  let components = metricMeta.totalTime.split(separator: ":")
 	  var secondsToAdd = 0
-
+	  
 	  if components.count == 2 {
 		 if let minutes = Int(components[0]),
 			let seconds = Int(components[1]) {
@@ -50,78 +70,85 @@ public struct MetricsView: View {
 			secondsToAdd = hours * 3600 + minutes * 60 + seconds
 		 }
 	  }
-
+	  
 	  return metricMeta.startDate.addingTimeInterval(TimeInterval(secondsToAdd))
    }
-
+   
    private var formattedHeartRate: String {
 	  if let heartRate = metricMeta.averageHeartRate {
-		 return String(format: "%.0f bpm", heartRate)
+		 return "\(formatNumber(heartRate, fractionDigits: 0)) bpm"
 	  }
 	  return "-- bpm"
    }
-
+   
+   private var formattedHeartRateRange: String {
+	  if let min = metricMeta.minHeartRate, let max = metricMeta.maxHeartRate {
+		 return "\(formatNumber(min, fractionDigits: 0))-\(formatNumber(max, fractionDigits: 0)) bpm"
+	  }
+	  return "-- bpm"
+   }
+   
    private var formattedElevationGain: String {
 	  if let elevation = metricMeta.elevationGain {
-		 return String(format: "%.0f ft", elevation)
+		 return "\(formatNumber(elevation, fractionDigits: 0)) ft"
 	  }
 	  return "-- ft"
    }
-
+   
    private var formattedAverageSpeed: String {
 	  if let speed = metricMeta.averageSpeed {
-		 return String(format: "%.1f mph", speed)
+		 return "\(formatNumber(speed, fractionDigits: 1)) mph"
 	  }
 	  return "-- mph"
    }
-
+   
    private var formattedCadence: String {
 	  if let cadence = metricMeta.cadence {
-		 return String(format: "%.0f spm", cadence)
+		 return "\(formatInteger(Int(cadence))) spm"
 	  }
 	  return "-- spm"
    }
-
+   
    private var formattedGroundContact: String {
 	  if let groundContact = metricMeta.groundContactTime {
-		 return String(format: "%.0f ms", groundContact)
+		 return "\(formatInteger(Int(groundContact))) ms"
 	  }
 	  return "-- ms"
    }
-
+   
    private var formattedVerticalOscillation: String {
 	  if let oscillation = metricMeta.verticalOscillation {
-		 return String(format: "%.1f cm", oscillation)
+		 return "\(formatNumber(oscillation, fractionDigits: 1)) cm"
 	  }
 	  return "-- cm"
    }
-
+   
    private var formattedStrideLength: String {
 	  if let strideLength = metricMeta.strideLength {
-		 return String(format: "%.2f m", strideLength)
+		 return "\(formatNumber(strideLength, fractionDigits: 2)) m"
 	  }
 	  return "-- m"
    }
-
-   private var formattedHeartRateRange: String {
-	  if let min = metricMeta.minHeartRate, let max = metricMeta.maxHeartRate {
-		 return String(format: "%.0f-%.0f bpm", min, max)
+   
+   private var formattedSteps: String {
+	  if let steps = metricMeta.stepCount {
+		 return formatInteger(steps)
 	  }
-	  return "-- bpm"
+	  return "--"
    }
-
+   
    private var formattedElevationChange: String {
 	  if let gain = metricMeta.elevationGain, let loss = metricMeta.elevationLoss {
 		 return String(format: "+%.0f/-%.0f ft", gain, loss)
 	  }
 	  return "-- ft"
    }
-
+   
    public init(workout: WorkoutCore, metricMeta: MetricMeta) {
 	  self.workout = workout
 	  self.metricMeta = metricMeta
    }
-
+   
    public var body: some View {
 	  ZStack {
 		 LinearGradient(
@@ -136,7 +163,7 @@ public struct MetricsView: View {
 			endPoint: .bottomTrailing
 		 )
 		 .ignoresSafeArea()
-
+		 
 		 ScrollView {
 			VStack(spacing: 20) {
 			   // Weather Summary Section with Weather Background
@@ -145,7 +172,7 @@ public struct MetricsView: View {
 					 .font(.title2)
 					 .fontWeight(.bold)
 					 .foregroundColor(.white)
-
+				  
 				  HStack {
 					 Text("\(metricMeta.weatherTemp ?? "N/A")°F")
 						.font(.system(size: 48, weight: .bold))
@@ -154,7 +181,7 @@ public struct MetricsView: View {
 						.font(.system(size: 40))
 				  }
 				  .foregroundColor(.white)
-
+				  
 				  Text(metricMeta.cityName)
 					 .font(.title3)
 					 .foregroundColor(.white)
@@ -173,13 +200,13 @@ public struct MetricsView: View {
 			   )
 			   .clipShape(RoundedRectangle(cornerRadius: 15))
 			   .padding(.horizontal)
-
-			   // CHANGE: Use LazyVGrid for metrics
+			   
+			   
 			   let columns = [
 				  GridItem(.flexible(), spacing: 16),
 				  GridItem(.flexible(), spacing: 16)
 			   ]
-
+			   
 			   LazyVGrid(columns: columns, spacing: 16) {
 				  // Core Metrics Section
 				  Group {
@@ -189,21 +216,21 @@ public struct MetricsView: View {
 						textSize: textSizeBig,
 						iconName: "clock.arrow.circlepath"
 					 )
-
+					 
 					 MetricBox(
 						title: "End",
 						value: endTime.formatted(date: .abbreviated, time: .shortened),
 						textSize: textSizeBig,
 						iconName: "clock.arrow.2.circlepath"
 					 )
-
+					 
 					 MetricBox(
 						title: "Distance",
-						value: String(format: "%.2f", workout.distance),
+						value: "\(formatNumber(workout.distance))",
 						textSize: textSizeBig,
 						iconName: "ruler"
 					 )
-
+					 
 					 MetricBox(
 						title: "Duration",
 						value: metricMeta.totalTime,
@@ -211,7 +238,7 @@ public struct MetricsView: View {
 						iconName: "stopwatch"
 					 )
 				  }
-
+				  
 				  // Pace & Speed Section
 				  Group {
 					 MetricBox(
@@ -220,26 +247,26 @@ public struct MetricsView: View {
 						textSize: textSizeBig,
 						iconName: "speedometer"
 					 )
-
+					 
 					 if let speed = metricMeta.averageSpeed {
 						MetricBox(
 						   title: "Avg Speed",
-						   value: String(format: "%.1f mph", speed),
+						   value: "\(formatNumber(speed, fractionDigits: 1)) mph",
 						   textSize: textSizeBig,
 						   iconName: "gauge.medium"
 						)
 					 }
 				  }
-
+				  
 				  // Heart Rate Section
 				  Group {
 					 MetricBox(
-						title: "Heart Rate",
+						title: "Avg Heart Rate",
 						value: formattedHeartRate,
 						textSize: textSizeBig,
 						iconName: "heart.fill"
 					 )
-
+					 
 					 MetricBox(
 						title: "HR Range",
 						value: formattedHeartRateRange,
@@ -247,28 +274,28 @@ public struct MetricsView: View {
 						iconName: "waveform.path.ecg"
 					 )
 				  }
-
+				  
 				  // Energy & Steps Section
 				  Group {
 					 if let steps = metricMeta.stepCount {
 						MetricBox(
 						   title: "Steps",
-						   value: String(format: "%d", steps),
+						   value: "\(formattedSteps)",
 						   textSize: textSizeBig,
 						   iconName: "figure.walk"
 						)
 					 }
-
+					 
 					 if let energy = metricMeta.energyBurned {
 						MetricBox(
 						   title: "Energy",
-						   value: String(format: "%.0f cal", energy),
+						   value: "\(formatNumber(energy)) cal",
 						   textSize: textSizeBig,
 						   iconName: "flame.fill"
 						)
 					 }
 				  }
-
+				  
 				  // Running Dynamics Section
 				  Group {
 					 MetricBox(
@@ -277,7 +304,7 @@ public struct MetricsView: View {
 						textSize: textSizeBig,
 						iconName: "figure.walk.motion"
 					 )
-
+					 
 					 MetricBox(
 						title: "Ground Contact",
 						value: formattedGroundContact,
@@ -285,7 +312,7 @@ public struct MetricsView: View {
 						iconName: "figure.walk.arrival"
 					 )
 				  }
-
+				  
 				  // Elevation Section
 				  Group {
 					 MetricBox(
@@ -294,17 +321,17 @@ public struct MetricsView: View {
 						textSize: textSizeBig,
 						iconName: "mountain.2.fill"
 					 )
-
+					 
 					 if let currentElevation = metricMeta.currentElevation {
 						MetricBox(
 						   title: "Current Alt",
-						   value: String(format: "%.0f ft", currentElevation),
+						   value: "\(formatNumber(currentElevation)) ft",
 						   textSize: textSizeBig,
 						   iconName: "arrow.up.right.circle"
 						)
 					 }
 				  }
-
+				  
 				  // Advanced Running Metrics
 				  Group {
 					 MetricBox(
@@ -313,7 +340,7 @@ public struct MetricsView: View {
 						textSize: textSizeBig,
 						iconName: "figure.walk.circle"
 					 )
-
+					 
 					 MetricBox(
 						title: "Vertical OSC",
 						value: formattedVerticalOscillation,

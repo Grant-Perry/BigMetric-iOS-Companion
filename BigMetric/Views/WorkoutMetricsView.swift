@@ -66,7 +66,6 @@ struct WorkoutMetricsView: View {
 				  // Distance with icon
 				  HStack(spacing: 6) {
 					 Image(systemName: "figure.run")
-
 					 Text("Distance:")
 						.font(.caption)
 					 Text("\(String(format: "%.2f", workout.distance)) mi")
@@ -85,6 +84,20 @@ struct WorkoutMetricsView: View {
 						Text("Avg Speed:")
 						   .font(.caption)
 						Text("\(String(format: "%.1f", speed)) mph")
+						   .fontWeight(.semibold)
+					 }
+					 .font(.system(size: 14))
+					 .frame(maxWidth: .infinity)
+					 .lineLimit(1)
+					 .minimumScaleFactor(0.5)
+					 .scaledToFit()
+
+					 // Pace with icon
+					 HStack(spacing: 6) {
+						Image(systemName: "figure.walk")
+						Text("Pace:")
+						   .font(.caption)
+						Text("\(formatPace(speed: speed))")
 						   .fontWeight(.semibold)
 					 }
 					 .font(.system(size: 14))
@@ -113,5 +126,13 @@ struct WorkoutMetricsView: View {
 	  let formatter = DateFormatter()
 	  formatter.dateFormat = "h:mm a"
 	  return formatter
+   }
+
+   private func formatPace(speed: Double) -> String {
+	  guard speed > 0 else { return "0:00 /mi" }
+	  let paceInMinutes = 60.0 / speed // converts mph to minutes per mile
+	  let minutes = Int(paceInMinutes)
+	  let seconds = Int((paceInMinutes - Double(minutes)) * 60)
+	  return String(format: "%d:%02d /mi", minutes, seconds)
    }
 }

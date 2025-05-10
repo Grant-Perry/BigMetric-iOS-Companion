@@ -18,23 +18,26 @@ class WorkoutRouteViewModel: ObservableObject {
    @Published var isLoading = false
    @Published var appeared = false
    @Published var isDataLoaded = false
-   
+   @Published var averageHeartRate: Double? = nil
+   @Published var minHeartRate: Double? = nil
+   @Published var maxHeartRate: Double? = nil
+
    private let workout: HKWorkout
    private let polyViewModel: PolyViewModel
-   
+
    init(workout: HKWorkout, polyViewModel: PolyViewModel) {
 	  self.workout = workout
 	  self.polyViewModel = polyViewModel
-	  
+
 	  Task {
 		 await loadWorkoutData()
 	  }
    }
-   
+
    func loadWorkoutData() async {
 	  isLoading = true
 	  isDataLoaded = false
-	  
+
 	  do {
 		 cityName = await polyViewModel.fetchCityName(for: workout) ?? "Unknown Location"
 		 distance = await polyViewModel.fetchDistance(for: workout) ?? 0
@@ -42,7 +45,11 @@ class WorkoutRouteViewModel: ObservableObject {
 		 formattedTotalTime = formatDuration(totalTime)
 		 averageSpeed = polyViewModel.fetchAverageSpeed(for: workout)
 		 routeStartDate = workout.startDate
-		 
+		 if let heartRateStats = polyViewModel.fetchHeartRateStats(for: workout) {
+			averageHeartRate = heartRateStats.avg
+			minHeartRate = heartRateStats.min
+			maxHeartRate = heartRateStats.max
+		 }
 		 // Handle weather data and explicitly check for "xmark" symbol
 		 if let (temp, symbol) = await polyViewModel.fetchWeather(for: workout),
 			let unwrappedSymbol = symbol,
@@ -53,12 +60,12 @@ class WorkoutRouteViewModel: ObservableObject {
 			weatherTemp = nil
 			weatherSymbol = nil
 		 }
-		 
+
 		 if distance == 0 && cityName == "Unknown Location" {
 			throw NSError(domain: "com.BigPoly", code: 404,
 						  userInfo: [NSLocalizedDescriptionKey: "No workout data available"])
 		 }
-		 
+
 		 isLoading = false
 		 isDataLoaded = true
 	  } catch {
@@ -68,19 +75,19 @@ class WorkoutRouteViewModel: ObservableObject {
 		 isDataLoaded = false
 	  }
    }
-   
+
    func formatDuration(_ duration: TimeInterval) -> String {
 	  let hours = Int(duration) / 3600
 	  let minutes = (Int(duration) % 3600) / 60
 	  let seconds = Int(duration) % 60
-	  
+
 	  if hours > 0 {
 		 return String(format: "%d:%02d:%02d", hours, minutes, seconds)
 	  } else {
 		 return String(format: "%02d:%02d", minutes, seconds)
 	  }
    }
-   
+
    func formatPaceMinMi() -> String {
 	  guard distance > 0, totalTime > 0 else { return "--" }
 	  let minutes = totalTime / 60.0

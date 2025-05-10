@@ -90,6 +90,9 @@ struct FullMapView: View {
 		 let totalTime = formatDuration(polyViewModel.fetchDuration(for: workout))
 		 let averageSpeed = polyViewModel.fetchAverageSpeed(for: workout)
 
+		 // Get heart rate data
+		 let heartRateStats = polyViewModel.fetchHeartRateStats(for: workout)
+
 		 var weatherTemp: String? = nil
 		 var weatherSymbol: String? = nil
 		 if let (temp, symbol) = await polyViewModel.fetchWeather(for: workout) {
@@ -125,6 +128,13 @@ struct FullMapView: View {
 		 metricMeta.averageSpeed = averageSpeed
 		 metricMeta.stepCount = stepCount
 		 metricMeta.energyBurned = energyBurned
+
+		 // Add heart rate data
+		 if let stats = heartRateStats {
+			metricMeta.averageHeartRate = stats.avg
+			metricMeta.minHeartRate = stats.min
+			metricMeta.maxHeartRate = stats.max
+		 }
 
 		 self.metricMeta = metricMeta
 		 isLoading = false

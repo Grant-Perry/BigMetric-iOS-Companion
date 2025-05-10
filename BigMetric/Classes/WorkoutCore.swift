@@ -13,7 +13,7 @@ import CoreLocation
 import Observation
 
 @Observable
-public class WorkoutCore {
+public class WorkoutCore: @unchecked Sendable {
    public static let shared = WorkoutCore()
    public var distance: Double = 0
    private let healthStore = HKHealthStore()
@@ -25,7 +25,19 @@ public class WorkoutCore {
    public func requestHealthKitPermission() async throws {
 	  let typesToRead: Set<HKObjectType> = [
 		 HKObjectType.workoutType(),
-		 HKSeriesType.workoutRoute()
+		 HKSeriesType.workoutRoute(),
+		 HKQuantityType(.heartRate),
+		 HKQuantityType(.heartRateVariabilitySDNN),
+		 HKQuantityType(.activeEnergyBurned),
+		 HKQuantityType(.distanceWalkingRunning),
+		 HKQuantityType(.stepCount),
+		 HKQuantityType(.runningSpeed),
+		 HKQuantityType(.runningPower),
+		 HKQuantityType(.walkingSpeed),
+		 HKQuantityType(.runningStrideLength),
+		 HKQuantityType(.walkingStepLength),
+		 HKQuantityType(.runningGroundContactTime),
+		 HKQuantityType(.runningVerticalOscillation)
 	  ]
 	  
 	  try await healthStore.requestAuthorization(toShare: [], read: typesToRead)
@@ -307,13 +319,43 @@ public class WorkoutCore {
    }
    
    public func update(from workout: HKWorkout) {
+	  // Basic metrics
 	  self.distance = workout.totalDistance?.doubleValue(for: .mile()) ?? 0.0
 	  
-	  // CHANGE: Use statistics(for:) instead of deprecated totalEnergyBurned
-	  let energyStatistics = workout.statistics(for: HKQuantityType(.activeEnergyBurned))
-	  let energyBurned = energyStatistics?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0.0
+	  // Heart Rate
+	  if let heartRateStats = workout.statistics(for: HKQuantityType(.heartRate)) {
+		 logAndPersist("[WorkoutCore] Heart Rate Avg: \(heartRateStats.averageQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())) ?? 0) bpm")
+		 logAndPersist("[WorkoutCore] Heart Rate Min: \(heartRateStats.minimumQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())) ?? 0) bpm")
+		 logAndPersist("[WorkoutCore] Heart Rate Max: \(heartRateStats.maximumQuantity()?.doubleValue(for: .count().unitDivided(by: .minute())) ?? 0) bpm")
+	  }
 	  
-	  logAndPersist("[WorkoutCore] Energy burned: \(energyBurned) kcal")
+	  // Steps & Cadence
+	  if let stepsStats = workout.statistics(for: HKQuantityType(.stepCount)) {
+		 logAndPersist("[WorkoutCore] Steps: \(stepsStats.sumQuantity()?.doubleValue(for: .count()) ?? 0)")
+	  }
+	  
+	  // Running Dynamics
+	  if let strideStats = workout.statistics(for: HKQuantityType(.runningStrideLength)) {
+		 logAndPersist("[WorkoutCore] Stride Length: \(strideStats.averageQuantity()?.doubleValue(for: .meter()) ?? 0) m")
+	  }
+	  
+	  if let groundContactStats = workout.statistics(for: HKQuantityType(.runningGroundContactTime)) {
+		 // Convert to milliseconds from seconds
+		 let seconds = groundContactStats.averageQuantity()?.doubleValue(for: .second()) ?? 0
+		 let milliseconds = seconds * 1000
+		 logAndPersist("[WorkoutCore] Ground Contact Time: \(milliseconds) ms")
+	  }
+	  
+	  if let verticalOscStats = workout.statistics(for: HKQuantityType(.runningVerticalOscillation)) {
+		 // Convert to centimeters for better readability
+		 let centimeters = (verticalOscStats.averageQuantity()?.doubleValue(for: .meter()) ?? 0) * 100
+		 logAndPersist("[WorkoutCore] Vertical Oscillation: \(centimeters) cm")
+	  }
+	  
+	  // Energy
+	  if let energyStats = workout.statistics(for: HKQuantityType(.activeEnergyBurned)) {
+		 logAndPersist("[WorkoutCore] Energy burned: \(energyStats.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0) kcal")
+	  }
    }
    
    public func fetchEnergyBurned(for workout: HKWorkout) async -> Double? {
