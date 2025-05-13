@@ -13,7 +13,7 @@ struct DigitalCompassView: View {
    @State var digitalCompassViewModel: DigitalCompassViewModel
    @StateObject private var weatherKitManager = WeatherKitManager()
    @StateObject private var altitudeManager = AltitudeManager()
-   @State private var rotateBGMode: Bool = false
+   @State private var rotateBGMode: Bool = true // true fixes the greenArrow
    @State private var hasLoadedWeather = false // Track if we've loaded weather
 
    private var isNearCardinal: Bool {
