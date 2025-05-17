@@ -247,7 +247,7 @@ struct SettingsView: View {
    }
 
    private var versionInfo: some View {
-	  Text("\(AppConstants.appName) - ver: \(AppConstants.getVersion())")
+	  Text("ver: \(AppConstants.getVersion())")
 		 .font(.system(size: 14, weight: .medium))
 		 .foregroundColor(.white.opacity(0.8))
 		 .padding(.top, 8)
