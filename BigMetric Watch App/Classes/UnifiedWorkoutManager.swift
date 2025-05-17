@@ -60,6 +60,11 @@ class UnifiedWorkoutManager: NSObject,
    let metersToFeet  = 0.3048
    let metersToMiles = 1609.344
    let metersToYards = 1.0936133
+
+   // Thresholds for filtering location updates
+   let locationAccuracyThreshold: CLLocationAccuracy = 20.0
+   let locationSpeedThreshold   : CLLocationSpeed   = 0.3
+   let minLocationDistance      : CLLocationDistance = 5.0
    
    var timer: Timer?
    var elapsedTime: Double = 0
@@ -591,12 +596,20 @@ class UnifiedWorkoutManager: NSObject,
 				  self.logger.info("[Pedometer] Initial steps: \(initialSteps)")
 				  self.holdInitialSteps = initialSteps
 				  
-				  self.pedometer.startUpdates(from: midnight) { [weak self] stepData, _ in
-					 guard let self = self,
-						   let stepData = stepData else { return }
-					 let currentSteps = Int(truncating: stepData.numberOfSteps)
-					 self.workoutStepCount = currentSteps - self.holdInitialSteps
-				  }
+                                 self.pedometer.startUpdates(from: midnight) { [weak self] stepData, _ in
+                                        guard let self = self,
+                                                  let stepData = stepData else { return }
+                                        let currentSteps = Int(truncating: stepData.numberOfSteps)
+                                        self.workoutStepCount = currentSteps - self.holdInitialSteps
+
+                                        // Update distance using pedometer when available
+                                        if CMPedometer.isDistanceAvailable(),
+                                           let pedDistance = stepData.distance?.doubleValue {
+                                               let miles = pedDistance / self.metersToMiles
+                                               self.distance = miles
+                                               self.logger.info("[Pedometer] Distance updated: \(miles)mi")
+                                        }
+                                 }
 			   }
 			}
 		 } else {
@@ -657,12 +670,18 @@ class UnifiedWorkoutManager: NSObject,
 		 // Keep existing mile trigger logic
 		 let prevMiles = Int(distance)
 		 locationsArray.append(contentsOf: newLocs)
-		 if let last = lastLocation, let current = newLocs.last {
-			let delta = current.distance(from: last)
-			totalDistanceAccumulated += delta
-		 }
-		 lastLocation = newLocs.last
-		 distance = totalDistanceAccumulated / metersToMiles
+                 if let last = lastLocation, let current = newLocs.last {
+                        if current.horizontalAccuracy <= locationAccuracyThreshold,
+                           last.horizontalAccuracy    <= locationAccuracyThreshold,
+                           current.speed >= locationSpeedThreshold {
+                               let delta = current.distance(from: last)
+                               if delta >= minLocationDistance {
+                                       totalDistanceAccumulated += delta
+                               }
+                        }
+                 }
+                lastLocation = newLocs.last
+                distance = totalDistanceAccumulated / metersToMiles
 		 let currentMiles = Int(distance)
 		 
 		 if currentMiles > prevMiles {
@@ -845,15 +864,22 @@ class UnifiedWorkoutManager: NSObject,
 				  self.logger.info("[UWM] Ground Contact Time updated: \(milliseconds)ms")
 			   }
 			   
-			case HKQuantityType(.runningVerticalOscillation):
-			   if let value = stats?.averageQuantity()?.doubleValue(for: .meter()) {
-				  let centimeters = value * 100  // Convert meters to centimeters
-				  self.logger.info("[UWM] Vertical oscillation updated: \(centimeters)cm")
-			   }
-			   
-			default:
-			   break
-		 }
+                        case HKQuantityType(.runningVerticalOscillation):
+                           if let value = stats?.averageQuantity()?.doubleValue(for: .meter()) {
+                                  let centimeters = value * 100  // Convert meters to centimeters
+                                  self.logger.info("[UWM] Vertical oscillation updated: \(centimeters)cm")
+                           }
+
+                        case HKQuantityType(.distanceWalkingRunning):
+                           if let value = stats?.sumQuantity()?.doubleValue(for: .meter()) {
+                                   let miles = value / self.metersToMiles
+                                   self.distance = miles
+                                   self.logger.info("[UWM] Distance updated via builder: \(miles)mi")
+                           }
+
+                        default:
+                           break
+                }
 	  }
    }
    
