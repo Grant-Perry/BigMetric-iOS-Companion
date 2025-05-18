@@ -73,13 +73,14 @@ struct RootBigMetricView: View {
 			.tabItem { Image(systemName: "doc.text.magnifyingglass") }
 			.tag(9)
 	  }
-	  .onAppear {
-		 unifiedWorkoutManager.onEndAndShowSummary = {
-			self.selectedTab = 4
-		 }
-		 unifiedWorkoutManager.requestHKAuth()
-		 selectedTab = 2
-	  }
+          .onAppear {
+                 unifiedWorkoutManager.onEndAndShowSummary = {
+                        self.selectedTab = 4
+                 }
+                 unifiedWorkoutManager.requestHKAuth()
+                 unifiedWorkoutManager.prewarmGPS()
+                 selectedTab = 2
+          }
 	  .tabViewStyle(PageTabViewStyle())
    }
 }

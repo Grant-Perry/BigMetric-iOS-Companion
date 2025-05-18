@@ -882,11 +882,17 @@ class UnifiedWorkoutManager: NSObject,
    }
    
    func forceLocationRefresh() {
-	  LMDelegate.stopUpdatingLocation()
-	  // Wait briefly before restarting
-	  DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-		 self?.LMDelegate.startUpdatingLocation()
-	  }
+          LMDelegate.stopUpdatingLocation()
+          // Wait briefly before restarting
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                 self?.LMDelegate.startUpdatingLocation()
+          }
+   }
+
+   /// Starts location updates to warm up GPS without beginning a workout.
+   func prewarmGPS() {
+          LMDelegate.delegate = self
+          LMDelegate.startUpdatingLocation()
    }
    
    // MARK: - Automatic Workout Detection Methods
