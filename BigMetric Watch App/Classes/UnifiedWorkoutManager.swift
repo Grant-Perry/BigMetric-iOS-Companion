@@ -851,6 +851,12 @@ class UnifiedWorkoutManager: NSObject,
 				  self.logger.info("[UWM] Vertical oscillation updated: \(centimeters)cm")
 			   }
 			   
+			case HKQuantityType(.distanceWalkingRunning):
+			   if let value = stats?.sumQuantity()?.doubleValue(for: .meter()) {
+				  self.distance = value / self.metersToMiles // Store as miles
+				  self.logger.info("[UWM] Distance updated from HealthKit: \(self.distance) miles (\(value) meters)")
+			   }
+			   
 			default:
 			   break
 		 }
@@ -882,17 +888,17 @@ class UnifiedWorkoutManager: NSObject,
    }
    
    func forceLocationRefresh() {
-          LMDelegate.stopUpdatingLocation()
-          // Wait briefly before restarting
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                 self?.LMDelegate.startUpdatingLocation()
-          }
+	  LMDelegate.stopUpdatingLocation()
+	  // Wait briefly before restarting
+	  DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+		 self?.LMDelegate.startUpdatingLocation()
+	  }
    }
-
+   
    /// Starts location updates to warm up GPS without beginning a workout.
    func prewarmGPS() {
-          LMDelegate.delegate = self
-          LMDelegate.startUpdatingLocation()
+	  LMDelegate.delegate = self
+	  LMDelegate.startUpdatingLocation()
    }
    
    // MARK: - Automatic Workout Detection Methods
