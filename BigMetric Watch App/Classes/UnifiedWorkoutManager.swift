@@ -826,11 +826,17 @@ class UnifiedWorkoutManager: NSObject,
 				  self.logger.info("[UWM] Energy burned updated: \(value)kcal")
 			   }
 			   
-			case HKQuantityType(.stepCount):
-			   if let value = stats?.sumQuantity()?.doubleValue(for: .count()) {
-				  self.workoutStepCount = Int(value)
-				  self.logger.info("[UWM] Steps updated: \(Int(value))")
-			   }
+                       case HKQuantityType(.stepCount):
+                          if let value = stats?.sumQuantity()?.doubleValue(for: .count()) {
+                                 self.workoutStepCount = Int(value)
+                                 self.logger.info("[UWM] Steps updated: \(Int(value))")
+                          }
+
+                       case HKQuantityType(.distanceWalkingRunning):
+                          if let meters = stats?.sumQuantity()?.doubleValue(for: .meter()) {
+                                 self.distance = meters / metersToMiles
+                                 self.logger.info("[UWM] Distance updated: \(self.distance) miles")
+                          }
 			   
 			case HKQuantityType(.runningStrideLength):
 			   if let value = stats?.averageQuantity()?.doubleValue(for: .meter()) {
